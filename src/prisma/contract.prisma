@@ -1,0 +1,233 @@
+// use prisma-8
+
+model Rol {
+  id          Int     @id @default(autoincrement())
+  nombre      String  @unique
+  descripcion String?
+  activo      Boolean @default(true)
+
+  usuarios Usuario[]
+
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+}
+
+model Usuario {
+  id       Int     @id @default(autoincrement())
+  nombre   String
+  apellido String?
+  email    String  @unique
+  password String
+  activo   Boolean @default(true)
+
+  rolId Int
+  rol   Rol @relation(fields: [rolId], references: [id])
+
+  movimientosInventario MovimientoInventario[]
+  comprasCreadas Compra[] @relation("CompraCreador")
+  comprasRecibidas Compra[] @relation("CompraReceptor")
+  ventasCreadas Venta[] @relation("VentaCreador")
+  ventasConfirmadas Venta[] @relation("VentaConfirmador")
+
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+}
+
+model Categoria {
+  id          Int     @id @default(autoincrement())
+  nombre      String  @unique
+  descripcion String?
+  activo      Boolean @default(true)
+
+  productos Producto[]
+
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+}
+
+model Producto {
+  id           Int     @id @default(autoincrement())
+  sku          String  @unique
+  codigoBarras String? @unique
+  nombre       String
+  descripcion  String?
+
+  costo        Decimal
+  precio       Decimal
+  stockMinimo  Int     @default(0)
+  unidadMedida String  @default("PIEZA")
+
+  activo Boolean @default(true)
+
+  categoriaId Int
+  categoria   Categoria @relation(fields: [categoriaId], references: [id])
+
+  existencia Existencia?
+  movimientosInventario MovimientoInventario[]
+  detallesCompra DetalleCompra[]
+  detallesVenta DetalleVenta[]
+
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+}
+
+enum TipoMovimientoInventario {
+  @@type("pg/text@1")
+  ENTRADA = "ENTRADA"
+  SALIDA = "SALIDA"
+  AJUSTE = "AJUSTE"
+}
+
+model Existencia {
+  id Int @id @default(autoincrement())
+  productoId Int @unique
+  producto Producto @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  cantidad Int @default(0)
+
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+
+  @@check(expression: "cantidad >= 0", name: "existencia_cantidad_no_negativa")
+}
+
+model MovimientoInventario {
+  id Int @id @default(autoincrement())
+  productoId Int
+  producto Producto @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  tipo TipoMovimientoInventario
+  cantidad Int
+  stockAnterior Int
+  stockNuevo Int
+  observacion String?
+  usuarioId Int
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  createdAt TimestamptzString @default(now())
+
+  @@check(expression: "\"stockAnterior\" >= 0 AND \"stockNuevo\" >= 0", name: "movimiento_stock_no_negativo")
+  @@check(expression: "(tipo = 'ENTRADA' AND cantidad > 0 AND \"stockNuevo\"::bigint = \"stockAnterior\"::bigint + cantidad) OR (tipo = 'SALIDA' AND cantidad > 0 AND \"stockNuevo\"::bigint = \"stockAnterior\"::bigint - cantidad) OR (tipo = 'AJUSTE' AND cantidad::bigint = \"stockNuevo\"::bigint - \"stockAnterior\"::bigint)", name: "movimiento_balance")
+}
+
+model Proveedor {
+  id Int @id @default(autoincrement())
+  nombre String
+  razonSocial String?
+  rfc String? @unique
+  email String?
+  telefono String?
+  direccion String?
+  contacto String?
+  activo Boolean @default(true)
+  compras Compra[]
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+}
+
+enum EstadoCompra {
+  @@type("pg/text@1")
+  BORRADOR = "BORRADOR"
+  RECIBIDA = "RECIBIDA"
+  CANCELADA = "CANCELADA"
+}
+
+model Compra {
+  id Int @id @default(autoincrement())
+  folio String @unique
+  proveedorId Int
+  proveedor Proveedor @relation(fields: [proveedorId], references: [id], onDelete: Restrict)
+  estado EstadoCompra @default(BORRADOR)
+  subtotal Decimal
+  impuestos Decimal @default("0")
+  total Decimal
+  observacion String?
+  createdByUsuarioId Int
+  creadoPor Usuario @relation("CompraCreador", fields: [createdByUsuarioId], references: [id], onDelete: Restrict)
+  recibidaPorUsuarioId Int?
+  recibidoPor Usuario? @relation("CompraReceptor", fields: [recibidaPorUsuarioId], references: [id], onDelete: Restrict)
+  fechaRecepcion TimestamptzString?
+  detalles DetalleCompra[]
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+
+  @@check(expression: "estado IN ('BORRADOR', 'RECIBIDA', 'CANCELADA')", name: "compra_estado_valido")
+  @@check(expression: "subtotal >= 0 AND impuestos >= 0 AND total = subtotal + impuestos", name: "compra_totales_validos")
+  @@check(expression: "(estado = 'RECIBIDA' AND \"recibidaPorUsuarioId\" IS NOT NULL AND \"fechaRecepcion\" IS NOT NULL) OR (estado <> 'RECIBIDA' AND \"recibidaPorUsuarioId\" IS NULL AND \"fechaRecepcion\" IS NULL)", name: "compra_recepcion_auditada")
+}
+
+model DetalleCompra {
+  id Int @id @default(autoincrement())
+  compraId Int
+  compra Compra @relation(fields: [compraId], references: [id], onDelete: Restrict)
+  productoId Int
+  producto Producto @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  cantidad Int
+  costoUnitario Decimal
+  subtotal Decimal
+  createdAt TimestamptzString @default(now())
+
+  @@unique([compraId, productoId])
+  @@check(expression: "cantidad > 0 AND \"costoUnitario\" >= 0 AND subtotal = cantidad * \"costoUnitario\"", name: "detalle_compra_importes_validos")
+}
+
+model Cliente {
+  id Int @id @default(autoincrement())
+  nombre String
+  apellido String?
+  razonSocial String?
+  rfc String? @unique
+  email String?
+  telefono String?
+  direccion String?
+  activo Boolean @default(true)
+  ventas Venta[]
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+}
+
+enum EstadoVenta {
+  @@type("pg/text@1")
+  BORRADOR = "BORRADOR"
+  CONFIRMADA = "CONFIRMADA"
+  CANCELADA = "CANCELADA"
+}
+
+model Venta {
+  id Int @id @default(autoincrement())
+  folio String @unique
+  clienteId Int
+  cliente Cliente @relation(fields: [clienteId], references: [id], onDelete: Restrict)
+  estado EstadoVenta @default(BORRADOR)
+  subtotal Decimal
+  impuestos Decimal @default("0")
+  total Decimal
+  costoTotal Decimal
+  utilidad Decimal
+  observacion String?
+  createdByUsuarioId Int
+  creadoPor Usuario @relation("VentaCreador", fields: [createdByUsuarioId], references: [id], onDelete: Restrict)
+  confirmadaPorUsuarioId Int?
+  confirmadoPor Usuario? @relation("VentaConfirmador", fields: [confirmadaPorUsuarioId], references: [id], onDelete: Restrict)
+  fechaConfirmacion TimestamptzString?
+  detalles DetalleVenta[]
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+
+  @@check(expression: "subtotal >= 0 AND impuestos >= 0 AND \"costoTotal\" >= 0 AND total = subtotal + impuestos AND utilidad = subtotal - \"costoTotal\"", name: "venta_importes_validos")
+  @@check(expression: "(estado = 'CONFIRMADA' AND \"confirmadaPorUsuarioId\" IS NOT NULL AND \"fechaConfirmacion\" IS NOT NULL) OR (estado <> 'CONFIRMADA' AND \"confirmadaPorUsuarioId\" IS NULL AND \"fechaConfirmacion\" IS NULL)", name: "venta_confirmacion_auditada")
+}
+
+model DetalleVenta {
+  id Int @id @default(autoincrement())
+  ventaId Int
+  venta Venta @relation(fields: [ventaId], references: [id], onDelete: Restrict)
+  productoId Int
+  producto Producto @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  cantidad Int
+  precioUnitario Decimal
+  costoUnitario Decimal
+  subtotal Decimal
+  costoSubtotal Decimal
+  createdAt TimestamptzString @default(now())
+
+  @@unique([ventaId, productoId])
+  @@check(expression: "cantidad > 0 AND \"precioUnitario\" >= 0 AND \"costoUnitario\" >= 0 AND subtotal = cantidad * \"precioUnitario\" AND \"costoSubtotal\" = cantidad * \"costoUnitario\"", name: "detalle_venta_importes_validos")
+}
