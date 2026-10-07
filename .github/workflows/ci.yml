@@ -1,4 +1,4 @@
-name: Sprint 7 CI
+name: Inventario CI
 on:
   pull_request:
   push:
