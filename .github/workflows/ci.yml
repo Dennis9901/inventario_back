@@ -241,7 +241,7 @@ jobs:
           docker build --target runtime -t inventario-back:phase2a inventario_back
           docker build --target tools -t inventario-back-tools:phase2a inventario_back
           cd inventario_front
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
           node scripts/phase2a-local.mjs validation --representative --skip-integration
           node scripts/ci-results.mjs playwright .ci-evidence/fase-2a/playwright-gateway-final/results.json 3
       - name: Clean owned validation stack after preparation failure
@@ -307,7 +307,7 @@ jobs:
           git -C inventario_back rev-parse HEAD > inventario_front/.ci-evidence/fase-2b/backend-sha.txt
       - name: Install Chromium
         working-directory: inventario_front
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
       - name: Create owned disposable PostgreSQL
         working-directory: inventario_front
         run: node scripts/e2e-lifecycle.mjs up
