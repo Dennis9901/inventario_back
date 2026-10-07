@@ -2,7 +2,7 @@ name: Inventario CI
 on:
   pull_request:
   push:
-    branches: [main, develop, 'sprint/**']
+    branches: [main, develop, qa, 'sprint/**']
   workflow_dispatch:
 permissions:
   contents: read
