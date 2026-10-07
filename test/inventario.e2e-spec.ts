@@ -3,7 +3,6 @@ import { Test } from '@nestjs/testing';
 import {
   ConflictException,
   NotFoundException,
-  ValidationPipe,
 } from '@nestjs/common';
 import type { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -36,13 +35,7 @@ describe.runIf(process.env.TEST_INVENTARIO_DB === '1')(
       }).compile();
       app = module.createNestApplication();
       app.setGlobalPrefix('api/v1');
-      app.useGlobalPipes(
-        new ValidationPipe({
-          whitelist: true,
-          forbidNonWhitelisted: true,
-          transform: true,
-        }),
-      );
+
       await app.init();
       database = app.get(DatabaseService);
       inventario = app.get(InventarioService);
@@ -70,6 +63,11 @@ describe.runIf(process.env.TEST_INVENTARIO_DB === '1')(
       if (database) {
         // Limpieza limitada a fixtures: primero sus movimientos, luego stock y padres.
         await database.db.transaction(async (tx) => {
+          for (const auditUserId of [usuarioId])
+            if (auditUserId)
+              await tx.orm.public.Auditoria.where({
+                usuarioId: auditUserId,
+              }).deleteAll();
           for (const id of ids) {
             await tx.orm.public.MovimientoInventario.where({
               productoId: id,

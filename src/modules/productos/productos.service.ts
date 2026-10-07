@@ -1,3 +1,4 @@
+import type { DatabaseTransaction } from '../../database/database.service.js';
 import {
   ConflictException,
   Injectable,
@@ -8,9 +9,39 @@ import { DatabaseService } from '../../database/database.service.js';
 import { CreateProductoDto } from './dto/create-producto.dto.js';
 import { UpdateProductoDto } from './dto/update-producto.dto.js';
 
+export const normalizarTextoProducto = (value: string) =>
+  value.trim().toUpperCase();
+export interface CatalogoProductoImportado {
+  sku: string;
+  nombre: string;
+  descripcion: string;
+  precio: string;
+  costo?: string;
+  categoriaId: number;
+  unidadMedidaId: number;
+  unidadMedida: string;
+  claveProductoServicioSat?: string;
+  objetoImpuestoSat?: string;
+}
+
 @Injectable()
 export class ProductosService {
   constructor(private readonly databaseService: DatabaseService) {}
+
+  private async validarUnidad(tx: DatabaseTransaction, id: number) {
+    await tx.query(
+      this.databaseService.db.raw
+        .sql`SELECT id FROM public."unidadMedida" WHERE id = ${id} FOR UPDATE`
+        .returnsRow({ id: 'pg/int4@1' })
+        .build(),
+    );
+    const unidad = await tx.orm.public.UnidadMedida.where({ id }).first();
+    if (!unidad) throw new NotFoundException('La unidad de medida no existe');
+    if (!unidad.activo)
+      throw new ConflictException(
+        'No se puede asignar una unidad de medida inactiva',
+      );
+  }
 
   async findAll() {
     return this.databaseService.db.orm.public.Producto.all();
@@ -28,8 +59,37 @@ export class ProductosService {
     return producto;
   }
 
+  // Persistencia exacta para importación; referencias/estado se revalidan y
+  // bloquean por batch antes de llegar aquí. Crear conserva Existencia = 0.
+  async guardarImportadoEnTransaccion(
+    tx: DatabaseTransaction,
+    datos: CatalogoProductoImportado,
+    id?: number,
+  ) {
+    const cambios = {
+      ...datos,
+      sku: normalizarTextoProducto(datos.sku),
+      nombre: normalizarTextoProducto(datos.nombre),
+      unidadMedida: normalizarTextoProducto(datos.unidadMedida),
+    };
+    if (id !== undefined)
+      return tx.orm.public.Producto.where({ id }).update(cambios);
+    if (datos.costo === undefined)
+      throw new ConflictException(
+        'Costo explícito requerido para producto nuevo',
+      );
+    const p = await tx.orm.public.Producto.create({
+      ...cambios,
+      costo: datos.costo,
+      stockMinimo: 0,
+      activo: true,
+    });
+    await tx.orm.public.Existencia.create({ productoId: p.id, cantidad: 0 });
+    return p;
+  }
+
   async create(createProductoDto: CreateProductoDto) {
-    const sku = createProductoDto.sku.trim().toUpperCase();
+    const sku = normalizarTextoProducto(createProductoDto.sku);
 
     const codigoBarras = createProductoDto.codigoBarras?.trim() || null;
 
@@ -70,12 +130,20 @@ export class ProductosService {
     }
 
     // 4. Crear
-    return this.databaseService.db.transaction(async (tx) => {
+    return this.databaseService.transaction(async (tx) => {
+      if (createProductoDto.unidadMedidaId !== undefined)
+        await this.validarUnidad(tx, createProductoDto.unidadMedidaId);
       const producto = await tx.orm.public.Producto.create({
         sku,
         codigoBarras,
+        ...(createProductoDto.unidadMedidaId !== undefined && {
+          unidadMedidaId: createProductoDto.unidadMedidaId,
+        }),
+        claveProductoServicioSat:
+          createProductoDto.claveProductoServicioSat?.trim() || null,
+        objetoImpuestoSat: createProductoDto.objetoImpuestoSat?.trim() || null,
 
-        nombre: createProductoDto.nombre.trim().toUpperCase(),
+        nombre: normalizarTextoProducto(createProductoDto.nombre),
 
         descripcion: createProductoDto.descripcion?.trim() || null,
 
@@ -108,7 +176,7 @@ export class ProductosService {
     // SKU
     // =========================================================
     if (updateProductoDto.sku !== undefined) {
-      sku = updateProductoDto.sku.trim().toUpperCase();
+      sku = normalizarTextoProducto(updateProductoDto.sku);
 
       const existente = await this.databaseService.db.orm.public.Producto.where(
         { sku },
@@ -162,7 +230,7 @@ export class ProductosService {
     // =========================================================
     // UPDATE
     // =========================================================
-    return this.databaseService.db.orm.public.Producto.where({ id }).update({
+    const cambios = {
       ...(sku !== undefined && {
         sku,
       }),
@@ -172,7 +240,7 @@ export class ProductosService {
       }),
 
       ...(updateProductoDto.nombre !== undefined && {
-        nombre: updateProductoDto.nombre.trim().toUpperCase(),
+        nombre: normalizarTextoProducto(updateProductoDto.nombre),
       }),
 
       ...(updateProductoDto.descripcion !== undefined && {
@@ -198,6 +266,29 @@ export class ProductosService {
       ...(updateProductoDto.categoriaId !== undefined && {
         categoriaId: updateProductoDto.categoriaId,
       }),
+      ...(updateProductoDto.claveProductoServicioSat !== undefined && {
+        claveProductoServicioSat:
+          updateProductoDto.claveProductoServicioSat.trim() || null,
+      }),
+      ...(updateProductoDto.objetoImpuestoSat !== undefined && {
+        objetoImpuestoSat: updateProductoDto.objetoImpuestoSat.trim() || null,
+      }),
+      ...(updateProductoDto.unidadMedidaId !== undefined && {
+        unidadMedidaId: updateProductoDto.unidadMedidaId,
+      }),
+    };
+    if (updateProductoDto.unidadMedidaId === undefined)
+      return this.databaseService.db.orm.public.Producto.where({ id }).update(
+        cambios,
+      );
+    return this.databaseService.transaction(async (tx) => {
+      await this.databaseService.bloquearProducto(tx, id);
+      const actual = await tx.orm.public.Producto.where({ id }).first();
+      if (!actual) throw new NotFoundException('El producto no existe');
+      // Conservar la referencia ya asignada permite editar metadata aunque la unidad se desactive.
+      if (actual.unidadMedidaId !== updateProductoDto.unidadMedidaId)
+        await this.validarUnidad(tx, updateProductoDto.unidadMedidaId!);
+      return tx.orm.public.Producto.where({ id }).update(cambios);
     });
   }
 
@@ -226,7 +317,7 @@ export class ProductosService {
   }
 
   async remove(id: number) {
-    return this.databaseService.db.transaction(async (tx) => {
+    return this.databaseService.transaction(async (tx) => {
       await this.databaseService.bloquearProducto(tx, id);
       const producto = await tx.orm.public.Producto.where({ id }).first();
       if (!producto) throw new NotFoundException('El producto no existe');

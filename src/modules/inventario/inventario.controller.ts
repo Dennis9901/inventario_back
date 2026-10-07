@@ -1,3 +1,8 @@
+import { Auditar } from '../../common/http/auditar.decorator.js';
+import {
+  ApiModulo,
+  ApiResultado,
+} from '../../common/http/api-docs.decorator.js';
 import {
   Body,
   Controller,
@@ -24,21 +29,26 @@ import {
   MovimientoProductoQueryDto,
 } from './dto/consulta-inventario.dto.js';
 
+@ApiModulo('Inventario', true)
 @Controller('inventario')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class InventarioController {
   constructor(private readonly inventarioService: InventarioService) {}
 
+  @ApiResultado('Existencia', 200, 'paginado', 'Inventario: findExistencias')
   @Get('existencias')
   findExistencias(@Query() query: ExistenciaQueryDto) {
     return this.inventarioService.findExistencias(query);
   }
 
+  @ApiResultado('Existencia', 200, 'objeto', 'Inventario: findExistencia')
   @Get('existencias/:productoId')
   findExistencia(@Param('productoId', ParseIntPipe) productoId: number) {
     return this.inventarioService.findExistencia(productoId);
   }
 
+  @ApiResultado('Movimiento', 201, 'objeto', 'Inventario: entrada')
+  @Auditar('ENTRADA_MANUAL', 'MOVIMIENTO_INVENTARIO')
   @Post('movimientos/entrada')
   @Roles('ADMINISTRADOR')
   entrada(
@@ -48,23 +58,34 @@ export class InventarioController {
     return this.inventarioService.entrada(dto, usuario.sub);
   }
 
+  @ApiResultado('Movimiento', 201, 'objeto', 'Inventario: salida')
+  @Auditar('SALIDA_MANUAL', 'MOVIMIENTO_INVENTARIO')
   @Post('movimientos/salida')
   @Roles('ADMINISTRADOR')
   salida(@Body() dto: SalidaInventarioDto, @CurrentUser() usuario: JwtPayload) {
     return this.inventarioService.salida(dto, usuario.sub);
   }
 
+  @ApiResultado('Movimiento', 201, 'objeto', 'Inventario: ajuste')
+  @Auditar('AJUSTE_MANUAL', 'MOVIMIENTO_INVENTARIO')
   @Post('movimientos/ajuste')
   @Roles('ADMINISTRADOR')
   ajuste(@Body() dto: AjusteInventarioDto, @CurrentUser() usuario: JwtPayload) {
     return this.inventarioService.ajuste(dto, usuario.sub);
   }
 
+  @ApiResultado('Movimiento', 200, 'paginado', 'Inventario: findMovimientos')
   @Get('movimientos')
   findMovimientos(@Query() query: MovimientoQueryDto) {
     return this.inventarioService.findMovimientos(query);
   }
 
+  @ApiResultado(
+    'Movimiento',
+    200,
+    'paginado',
+    'Inventario: findMovimientosProducto',
+  )
   @Get('movimientos/producto/:productoId')
   findMovimientosProducto(
     @Param('productoId', ParseIntPipe) productoId: number,
@@ -73,6 +94,7 @@ export class InventarioController {
     return this.inventarioService.findMovimientosProducto(productoId, query);
   }
 
+  @ApiResultado('Kardex', 200, 'objeto', 'Inventario: findKardex')
   @Get('kardex/:productoId')
   findKardex(
     @Param('productoId', ParseIntPipe) productoId: number,

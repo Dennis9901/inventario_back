@@ -132,7 +132,7 @@ export class ComprasService {
   async create(dto: CreateCompraDto, usuarioId: number) {
     const detalles = calcularDetalles(dto.detalles);
     const totales = calcularTotales(detalles, dto.impuestos ?? 0);
-    return this.database.db.transaction(async (tx) => {
+    return this.database.transaction(async (tx) => {
       await this.validarUsuario(tx, usuarioId);
       await this.validarProveedor(tx, dto.proveedorId);
       await this.validarProductos(
@@ -172,7 +172,7 @@ export class ComprasService {
   }
 
   update(id: number, dto: UpdateCompraDto, usuarioId: number) {
-    return this.database.db.transaction(async (tx) => {
+    return this.database.transaction(async (tx) => {
       const compra = await this.bloquearBorrador(tx, id);
       await this.validarUsuario(tx, usuarioId);
       const proveedorId = dto.proveedorId ?? compra.proveedorId;
@@ -212,7 +212,7 @@ export class ComprasService {
   }
 
   recibir(id: number, usuarioId: number) {
-    return this.database.db.transaction(async (tx) => {
+    return this.database.transaction(async (tx) => {
       const compra = await this.bloquearBorrador(tx, id);
       await this.validarUsuario(tx, usuarioId);
       await this.validarProveedor(tx, compra.proveedorId);
@@ -242,7 +242,7 @@ export class ComprasService {
   }
 
   cancelar(id: number, usuarioId: number) {
-    return this.database.db.transaction(async (tx) => {
+    return this.database.transaction(async (tx) => {
       await this.bloquearBorrador(tx, id);
       await this.validarUsuario(tx, usuarioId);
       await tx.orm.public.Compra.where({ id }).update({ estado: 'CANCELADA' });
@@ -251,7 +251,7 @@ export class ComprasService {
   }
 
   remove(id: number, usuarioId: number) {
-    return this.database.db.transaction(async (tx) => {
+    return this.database.transaction(async (tx) => {
       const compra = await this.bloquearBorrador(tx, id);
       await this.validarUsuario(tx, usuarioId);
       await tx.orm.public.DetalleCompra.where({ compraId: id }).deleteAll();

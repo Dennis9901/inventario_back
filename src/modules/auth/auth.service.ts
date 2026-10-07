@@ -1,3 +1,4 @@
+import { ConfiguracionService } from '../../configuracion/configuracion.module.js';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 
 import { JwtService } from '@nestjs/jwt';
@@ -11,11 +12,11 @@ export class AuthService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly jwtService: JwtService,
+    private readonly config: ConfiguracionService,
   ) {}
 
   async login(loginDto: LoginDto) {
     const email = loginDto.email.trim().toLowerCase();
-
 
     const usuario = await this.databaseService.db.orm.public.Usuario.where({
       email,
@@ -38,7 +39,6 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales incorrectas');
     }
 
-
     const rol = await this.databaseService.db.orm.public.Rol.where({
       id: usuario.rolId,
     }).first();
@@ -59,7 +59,7 @@ export class AuthService {
     return {
       access_token: accessToken,
       token_type: 'Bearer',
-      expires_in: '8h',
+      expires_in: this.config.valores.jwtExpiresIn,
       usuario: {
         id: usuario.id,
         nombre: usuario.nombre,

@@ -244,7 +244,7 @@ export class InventarioService {
   }
 
   private registrar(operacion: Operacion, usuarioId: number) {
-    return this.databaseService.db.transaction((tx) =>
+    return this.databaseService.transaction((tx) =>
       this.registrarEnTransaccion(tx, operacion, usuarioId),
     );
   }

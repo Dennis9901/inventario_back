@@ -57,6 +57,9 @@ describe('ProductosService', () => {
       },
     };
     service = new ProductosService({
+      transaction: async (
+        callback: (tx: { orm: typeof orm }) => Promise<unknown>,
+      ) => callback({ orm }),
       bloquearProducto: vi.fn().mockResolvedValue(undefined),
       db: {
         orm,

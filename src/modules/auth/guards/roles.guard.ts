@@ -6,15 +6,9 @@ import {
 } from '@nestjs/common';
 
 import { Reflector } from '@nestjs/core';
-import type { Request } from 'express';
+import type { ApiRequest } from '../../../common/http/request-context.js';
 
 import { ROLES_KEY } from '../decorators/roles.decorator.js';
-
-import type { JwtPayload } from '../interfaces/jwt-payload.interface.js';
-
-interface AuthenticatedRequest extends Request {
-  user?: JwtPayload;
-}
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -30,7 +24,7 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const request = context.switchToHttp().getRequest<ApiRequest>();
 
     const usuario = request.user;
 

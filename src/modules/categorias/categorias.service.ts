@@ -2,6 +2,7 @@ import { Injectable,
           ConflictException,
 NotFoundException} from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service.js';
+import { tieneSqlState } from '../../common/errores-db.js';
 import { CreateCategoriaDto } from './dto/create-categoria.dto.js';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto.js';
 
@@ -71,17 +72,35 @@ export class CategoriasService {
   }
 
   async remove(id: number) {
-    const categoria = await this.findOne(id);
-
-    await this.databaseService.db.orm.public.Categoria.where({ id }).delete();
-
-    return {
-      message: 'Categoría eliminada definitivamente',
-      categoria: {
-        id: categoria.id,
-        nombre: categoria.nombre,
-      },
-    };
+    try {
+      return await this.databaseService.transaction(async (tx) => {
+        await tx.query(
+          this.databaseService.db.raw
+            .sql`SELECT id FROM public.categoria WHERE id = ${id} FOR UPDATE`
+            .returnsRow({ id: 'pg/int4@1' })
+            .build(),
+        );
+        const categoria = await tx.orm.public.Categoria.where({ id }).first();
+        if (!categoria) throw new NotFoundException('La categoría no existe');
+        if (await tx.orm.public.Producto.where({ categoriaId: id }).first()) {
+          throw new ConflictException(
+            'La categoría está relacionada con productos; utiliza la baja lógica',
+          );
+        }
+        await tx.orm.public.Categoria.where({ id }).delete();
+        return {
+          message: 'Categoría eliminada definitivamente',
+          categoria: { id: categoria.id, nombre: categoria.nombre },
+        };
+      });
+    } catch (error: unknown) {
+      if (tieneSqlState(error, '23503')) {
+        throw new ConflictException(
+          'La categoría está relacionada con productos; utiliza la baja lógica',
+        );
+      }
+      throw error;
+    }
   }
 
   async update(id: number, updateCategoriaDto: UpdateCategoriaDto) {

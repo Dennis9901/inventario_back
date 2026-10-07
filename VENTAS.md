@@ -1,5 +1,7 @@
 # Clientes y ventas
 
+Revalidación del 2026-10-05: la funcionalidad descrita ya estaba implementada al iniciar esta tarea. Se conservó el código de negocio y el contrato; se agregó una prueba PostgreSQL de recepción de compra y confirmación de venta concurrentes con productos en orden inverso. Resultado: 254 unitarias y 93 E2E pasan (347 total). TypeScript, build, lint, contract emit, db verify y dry-run sin operaciones pasan. El reporte detallado está en [docs/VALIDACION-VENTAS-2026-10-05.md](docs/VALIDACION-VENTAS-2026-10-05.md); la colección importable está en [docs/ventas.postman_collection.json](docs/ventas.postman_collection.json).
+
 Extensión del backend existente NestJS, ESM y Prisma ORM 8 RC Contracts. Conserva Compras, Inventario y sus endpoints. No cambia dependencias. Inventario sigue siendo la única autoridad que modifica Existencia y registra movimientos.
 
 ## Arquitectura
@@ -300,3 +302,9 @@ No hay pagos, crédito, CFDI, cuentas por cobrar, reservaciones, descuentos, pro
 - `npx prisma db update --dry-run` final: cero operaciones pendientes.
 - Consulta real de cierre: cero existencias negativas, cero movimientos huérfanos, cero detalles de venta huérfanos y cero fixtures de productos/clientes/usuarios de las suites comprobadas. La suite además verifica por IDs propios la limpieza de ventas, detalles, existencias y movimientos.
 - Prisma CLI advierte que sus skills locales no están sincronizadas y que la política de control excluye el namespace externo `__unbound__`; no afecta la verificación del espacio app ni requirió cambios de dependencias.
+
+## Backend 5B — Listas de precios
+
+listaPrecioId opcional al crear; sin lista usa Producto.precio. Cambiar lista en BORRADOR recalcula todas las líneas; null en PATCH vuelve a base. CONFIRMADA/CANCELADA inmutables y devoluciones conservan snapshots.
+
+Ver [docs/LISTAS-PRECIOS.md](docs/LISTAS-PRECIOS.md) para contrato, fallback, concurrencia e instalación del SQL complementario.

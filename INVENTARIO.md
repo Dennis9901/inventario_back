@@ -1,5 +1,7 @@
 # Inventario
 
+Devoluciones de venta registra ENTRADAS compensatorias mediante `entradaEnTransaccion`; devoluciones de compra registra SALIDAS compensatorias mediante `salidaEnTransaccion`. Ambas comparten una sola transacción con su documento y conservan movimientos históricos. Kardex mantiene ENTRADA/SALIDA/AJUSTE y muestra el origen en observación. El flujo real Compra+20, Venta-8, devolución cliente+3, devolución proveedor-4 termina en stock11. InventarioService sigue siendo la única autoridad de existencias. Véase [DEVOLUCIONES.md](DEVOLUCIONES.md) para disponibilidad histórica, locks, concurrencia y rollback.
+
 Ventas utiliza `salidaEnTransaccion` como wrapper del mismo núcleo transaccional para confirmar todos sus detalles atómicamente. Véase [VENTAS.md](VENTAS.md). Los endpoints manuales mantienen su comportamiento. DELETE de productos con detalles de venta también devuelve 409.
 
 Compras se integra mediante `InventarioService.entradaEnTransaccion`, reutilizando las reglas y bloqueos existentes dentro de una única transacción de recepción. Los endpoints manuales conservan su propia transacción. Véase [COMPRAS.md](COMPRAS.md) para el dominio comercial, auditoría, rollback y doble recepción. DELETE de productos con detalles de compra también devuelve 409 para conservar las referencias normalizadas.

@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   IsEmail,
@@ -8,17 +9,35 @@ import {
 } from 'class-validator';
 
 export class UpdateProveedorDto {
+  @ApiProperty({
+    required: false,
+    type: String,
+    example: 'Dato ficticio',
+    maxLength: 200,
+  })
   @ValidateIf((_o: unknown, v: unknown) => v !== undefined)
   @IsString()
   @Matches(/\S/)
   @MaxLength(200)
   nombre?: string;
 
+  @ApiProperty({
+    required: false,
+    type: String,
+    example: 'Texto de ejemplo',
+    maxLength: 200,
+  })
   @ValidateIf((_o: unknown, v: unknown) => v !== undefined)
   @IsString()
   @MaxLength(200)
   razonSocial?: string;
 
+  @ApiProperty({
+    required: false,
+    type: String,
+    example: 'Texto de ejemplo',
+    maxLength: 13,
+  })
   @ValidateIf((_o: unknown, v: unknown) => v !== undefined)
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim().toUpperCase() : value,
@@ -28,6 +47,13 @@ export class UpdateProveedorDto {
   @MaxLength(13)
   rfc?: string;
 
+  @ApiProperty({
+    required: false,
+    type: String,
+    format: 'email',
+    example: 'persona@example.invalid',
+    maxLength: 150,
+  })
   @ValidateIf((_o: unknown, v: unknown) => v !== undefined)
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim().toLowerCase() : value,
@@ -36,16 +62,34 @@ export class UpdateProveedorDto {
   @MaxLength(150)
   email?: string;
 
+  @ApiProperty({
+    required: false,
+    type: String,
+    example: 'Texto de ejemplo',
+    maxLength: 50,
+  })
   @ValidateIf((_o: unknown, v: unknown) => v !== undefined)
   @IsString()
   @MaxLength(50)
   telefono?: string;
 
+  @ApiProperty({
+    required: false,
+    type: String,
+    example: 'Texto de ejemplo',
+    maxLength: 500,
+  })
   @ValidateIf((_o: unknown, v: unknown) => v !== undefined)
   @IsString()
   @MaxLength(500)
   direccion?: string;
 
+  @ApiProperty({
+    required: false,
+    type: String,
+    example: 'Texto de ejemplo',
+    maxLength: 200,
+  })
   @ValidateIf((_o: unknown, v: unknown) => v !== undefined)
   @IsString()
   @MaxLength(200)

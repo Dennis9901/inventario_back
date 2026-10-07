@@ -1,3 +1,4 @@
+import { ListasPreciosService } from '../listas-precios/listas-precios.service.js';
 import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
@@ -33,6 +34,7 @@ export class VentasService {
     private readonly database: DatabaseService,
     private readonly inventario: InventarioService,
     private readonly clientes: ClientesService,
+    private readonly precios: ListasPreciosService,
   ) {}
 
   private consulta(tx?: DatabaseTransaction) {
@@ -165,16 +167,29 @@ export class VentasService {
 
   async create(dto: CreateVentaDto, usuarioId: number) {
     validarDetallesVenta(dto.detalles);
-    return this.database.db.transaction(async (tx) => {
+    return this.database.transaction(async (tx) => {
+      await this.precios.bloquearConfiguracion(tx);
+      if (dto.listaPrecioId !== undefined)
+        await this.precios.validarLista(tx, dto.listaPrecioId);
       await this.validarUsuario(tx, usuarioId);
       await this.validarCliente(tx, dto.clienteId);
       const productos = await this.productosBloqueados(tx, dto.detalles);
-      const detalles = dto.detalles.map((d) =>
-        snapshotVenta(d, productos.get(d.productoId)!),
-      );
+      const fechaPrecio = new Date().toISOString();
+      const detalles: SnapshotVenta[] = [];
+      for (const d of dto.detalles) {
+        const producto = productos.get(d.productoId)!;
+        const precio = await this.precios.resolverEnTransaccion(
+          tx,
+          d.productoId,
+          dto.listaPrecioId,
+          fechaPrecio,
+        );
+        detalles.push(snapshotVenta(d, { ...producto, precio: precio.precio }));
+      }
       const venta = await tx.orm.public.Venta.create({
         folio: `VENT-${new Date().getUTCFullYear()}-${randomUUID().toUpperCase()}`,
         clienteId: dto.clienteId,
+        listaPrecioId: dto.listaPrecioId ?? null,
         estado: 'BORRADOR',
         ...totalesVenta(detalles, dto.impuestos ?? 0),
         observacion: dto.observacion?.trim() || null,
@@ -191,8 +206,16 @@ export class VentasService {
 
   update(id: number, dto: UpdateVentaDto, usuarioId: number) {
     if (dto.detalles !== undefined) validarDetallesVenta(dto.detalles);
-    return this.database.db.transaction(async (tx) => {
+    return this.database.transaction(async (tx) => {
       const venta = await this.bloquearBorrador(tx, id);
+      await this.precios.bloquearConfiguracion(tx);
+      const listaPrecioId =
+        dto.listaPrecioId !== undefined
+          ? dto.listaPrecioId
+          : venta.listaPrecioId;
+      const cambioLista = listaPrecioId !== venta.listaPrecioId;
+      if (listaPrecioId !== null)
+        await this.precios.validarLista(tx, listaPrecioId);
       await this.validarUsuario(tx, usuarioId);
       const clienteId = dto.clienteId ?? venta.clienteId;
       await this.validarCliente(tx, clienteId);
@@ -200,17 +223,35 @@ export class VentasService {
         ventaId: id,
       }).all();
       let detalles: SnapshotVenta[] = anteriores;
-      if (dto.detalles !== undefined) {
-        const productos = await this.productosBloqueados(tx, dto.detalles);
+      if (dto.detalles !== undefined || cambioLista) {
+        const solicitados =
+          dto.detalles ??
+          anteriores.map((d) => ({
+            productoId: d.productoId,
+            cantidad: d.cantidad,
+          }));
+        const productos = await this.productosBloqueados(tx, solicitados);
         const porProducto = new Map(anteriores.map((d) => [d.productoId, d]));
-        detalles = dto.detalles.map((d) => {
+        detalles = [];
+        const fechaPrecio = new Date().toISOString();
+        for (const d of solicitados) {
           const anterior = porProducto.get(d.productoId);
-          // Producto y cantidad idénticos conservan todos los importes históricos.
-          return anterior?.cantidad === d.cantidad
-            ? anterior
-            : snapshotVenta(d, productos.get(d.productoId)!);
-        });
-        const nuevosIds = new Set(dto.detalles.map((d) => d.productoId));
+          if (!cambioLista && anterior?.cantidad === d.cantidad)
+            detalles.push(anterior);
+          else {
+            const producto = productos.get(d.productoId)!;
+            const precio = await this.precios.resolverEnTransaccion(
+              tx,
+              d.productoId,
+              listaPrecioId,
+              fechaPrecio,
+            );
+            detalles.push(
+              snapshotVenta(d, { ...producto, precio: precio.precio }),
+            );
+          }
+        }
+        const nuevosIds = new Set(solicitados.map((d) => d.productoId));
         for (const anterior of anteriores) {
           if (!nuevosIds.has(anterior.productoId))
             await tx.orm.public.DetalleVenta.where({
@@ -219,7 +260,12 @@ export class VentasService {
         }
         for (const detalle of detalles) {
           const anterior = porProducto.get(detalle.productoId);
-          if (anterior && anterior.cantidad === detalle.cantidad) continue;
+          if (
+            !cambioLista &&
+            anterior &&
+            anterior.cantidad === detalle.cantidad
+          )
+            continue;
           const valores = {
             cantidad: detalle.cantidad,
             precioUnitario: detalle.precioUnitario,
@@ -241,6 +287,7 @@ export class VentasService {
       }
       await tx.orm.public.Venta.where({ id }).update({
         clienteId,
+        listaPrecioId,
         ...totalesVenta(detalles, dto.impuestos ?? venta.impuestos),
         ...(dto.observacion !== undefined && {
           observacion: dto.observacion.trim() || null,
@@ -251,7 +298,7 @@ export class VentasService {
   }
 
   confirmar(id: number, usuarioId: number) {
-    return this.database.db.transaction(async (tx) => {
+    return this.database.transaction(async (tx) => {
       const venta = await this.bloquearBorrador(tx, id);
       await this.validarUsuario(tx, usuarioId);
       await this.validarCliente(tx, venta.clienteId);
@@ -281,7 +328,7 @@ export class VentasService {
   }
 
   cancelar(id: number, usuarioId: number) {
-    return this.database.db.transaction(async (tx) => {
+    return this.database.transaction(async (tx) => {
       await this.bloquearBorrador(tx, id);
       await this.validarUsuario(tx, usuarioId);
       await tx.orm.public.Venta.where({ id }).update({ estado: 'CANCELADA' });
@@ -290,7 +337,7 @@ export class VentasService {
   }
 
   remove(id: number, usuarioId: number) {
-    return this.database.db.transaction(async (tx) => {
+    return this.database.transaction(async (tx) => {
       const venta = await this.bloquearBorrador(tx, id);
       await this.validarUsuario(tx, usuarioId);
       await tx.orm.public.DetalleVenta.where({ ventaId: id }).deleteAll();

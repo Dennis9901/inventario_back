@@ -99,7 +99,7 @@ export class ProveedoresService {
 
   async update(id: number, dto: UpdateProveedorDto) {
     try {
-      return await this.database.db.transaction(async (tx) => {
+      return await this.database.transaction(async (tx) => {
         await this.bloquear(tx, id);
         await tx.orm.public.Proveedor.where({ id }).update(
           this.normalizar(dto),
@@ -114,7 +114,7 @@ export class ProveedoresService {
   }
 
   cambiarActivo(id: number, activo: boolean) {
-    return this.database.db.transaction(async (tx) => {
+    return this.database.transaction(async (tx) => {
       const proveedor = await this.bloquear(tx, id);
       if (proveedor.activo === activo)
         throw new ConflictException('El proveedor ya tiene ese estado');
@@ -124,7 +124,7 @@ export class ProveedoresService {
   }
 
   remove(id: number) {
-    return this.database.db.transaction(async (tx) => {
+    return this.database.transaction(async (tx) => {
       const proveedor = await this.bloquear(tx, id);
       if (await tx.orm.public.Compra.where({ proveedorId: id }).first())
         throw new ConflictException(

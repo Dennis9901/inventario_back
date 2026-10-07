@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
 import { Test } from '@nestjs/testing';
-import { ValidationPipe } from '@nestjs/common';
 import type { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
@@ -40,13 +39,7 @@ describe.runIf(process.env.TEST_INVENTARIO_DB === '1')(
       }).compile();
       app = module.createNestApplication();
       app.setGlobalPrefix('api/v1');
-      app.useGlobalPipes(
-        new ValidationPipe({
-          whitelist: true,
-          forbidNonWhitelisted: true,
-          transform: true,
-        }),
-      );
+
       await app.init();
       database = app.get(DatabaseService);
       productos = app.get(ProductosService);
@@ -89,6 +82,11 @@ describe.runIf(process.env.TEST_INVENTARIO_DB === '1')(
       try {
         if (database) {
           await database.db.transaction(async (tx) => {
+            for (const auditUserId of [usuarioId, confirmadorId])
+              if (auditUserId)
+                await tx.orm.public.Auditoria.where({
+                  usuarioId: auditUserId,
+                }).deleteAll();
             for (const id of ventaIds) {
               await tx.orm.public.DetalleVenta.where({
                 ventaId: id,
@@ -668,6 +666,55 @@ describe.runIf(process.env.TEST_INVENTARIO_DB === '1')(
       expect(await salidas(b)).toHaveLength(2);
     });
 
+    it('recepción y confirmación concurrentes con productos inversos conservan el balance', async () => {
+      const c = await cliente();
+      const a = await producto(10);
+      const b = await producto(10);
+      const proveedor = await post('proveedores', { nombre: prefix }).expect(
+        201,
+      );
+      proveedorIds.push(proveedor.body.id as number);
+      const compra = await post('compras', {
+        proveedorId: proveedor.body.id,
+        detalles: [
+          { productoId: b, cantidad: 4, costoUnitario: 100 },
+          { productoId: a, cantidad: 3, costoUnitario: 100 },
+        ],
+      }).expect(201);
+      compraIds.push(compra.body.id as number);
+      const v = await venta(c.id, [
+        { productoId: a, cantidad: 2 },
+        { productoId: b, cantidad: 5 },
+      ]);
+      await Promise.all([
+        post(`compras/${compra.body.id}/recibir`).expect(201),
+        post(`ventas/${v.id}/confirmar`).expect(201),
+      ]);
+      expect(await saldo(a)).toBe(11);
+      expect(await saldo(b)).toBe(9);
+      for (const id of [a, b]) {
+        const historia = (await movimientos(id)).sort((x, y) => x.id - y.id);
+        expect(historia).toHaveLength(3);
+        let anterior = 0;
+        for (const movimiento of historia) {
+          expect(movimiento.stockAnterior).toBe(anterior);
+          expect(movimiento.stockNuevo).toBe(
+            anterior +
+              (movimiento.tipo === 'SALIDA' ? -1 : 1) * movimiento.cantidad,
+          );
+          anterior = movimiento.stockNuevo;
+        }
+        expect(anterior).toBe(await saldo(id));
+        expect(await salidas(id)).toHaveLength(1);
+      }
+      expect(
+        (await get(`compras/${compra.body.id}`).expect(200)).body.estado,
+      ).toBe('RECIBIDA');
+      expect((await get(`ventas/${v.id}`).expect(200)).body.estado).toBe(
+        'CONFIRMADA',
+      );
+    });
+
     it('AY-BC/AC/BG: cancelar BORRADOR conserva stock e historial', async () => {
       const v = await borrador();
       await post(`ventas/${v.id}/cancelar`).expect(201);
@@ -956,7 +1003,11 @@ describe.runIf(process.env.TEST_INVENTARIO_DB === '1')(
         .get('/api/v1/auth/me')
         .set('Authorization', `Bearer ${login.body.access_token}`)
         .expect(200);
-      await get('roles').expect(200);
+      await request(app.getHttpServer())
+        .get('/api/v1/roles')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      await get('roles').expect(403);
       const usuarios = await get('usuarios').expect(200);
       expect(JSON.stringify(usuarios.body)).not.toContain('password');
       await get('categorias').expect(200);

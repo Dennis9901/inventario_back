@@ -1,0 +1,372 @@
+name: Sprint 7 CI
+on:
+  pull_request:
+  push:
+    branches: [main, develop, 'sprint/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  CI: 'true'
+  E2E_LIFECYCLE_EVIDENCE_DIR: .ci-evidence/fase-1
+  PHASE2A_EVIDENCE_DIR: .ci-evidence/fase-2a
+  DO_NOT_TRACK: '1'
+  PRISMA_DISABLE_TELEMETRY: '1'
+  NODE_ENV: test
+  DATABASE_URL: postgresql://unit_test_user@127.0.0.1:1/unit_test
+  JWT_SECRET: ci-unit-tests-only-synthetic-secret-32-characters
+  TEST_INVENTARIO_DB: '0'
+  E2E_ALLOW_MUTATIONS: '0'
+defaults:
+  run:
+    shell: bash
+jobs:
+  revisions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      companion: ${{ steps.sha.outputs.companion }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: Dennis9901/inventario_front
+          ref: ${{ vars.CI_FRONTEND_REF || 'main' }}
+          token: ${{ secrets.CI_REPO_READ_TOKEN || github.token }}
+          persist-credentials: false
+      - id: sha
+        run: echo "companion=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+  frontend:
+    needs: revisions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          path: inventario_back
+          persist-credentials: false
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: Dennis9901/inventario_front
+          ref: ${{ needs.revisions.outputs.companion }}
+          token: ${{ secrets.CI_REPO_READ_TOKEN || github.token }}
+          path: inventario_front
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.21.0'
+          cache: npm
+          cache-dependency-path: |
+            inventario_front/package-lock.json
+            inventario_back/package-lock.json
+      - name: Install locked dependencies
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund --prefix inventario_front
+          npm ci --ignore-scripts --no-audit --no-fund --prefix inventario_back
+      - name: Record tested revisions
+        run: |
+          mkdir -p inventario_front/.ci-evidence/fase-2b
+          git -C inventario_front rev-parse HEAD > inventario_front/.ci-evidence/fase-2b/frontend-sha.txt
+          git -C inventario_back rev-parse HEAD > inventario_front/.ci-evidence/fase-2b/backend-sha.txt
+      - name: frontend quality gate
+        run: |
+          cd inventario_front
+          npm run typecheck
+          npm run typecheck:unused
+          npm run lint
+          npm test -- --reporter=json --outputFile=.ci-evidence/fase-2b/frontend-unit.json
+          npm run build
+          npm run test:e2e-components
+          node --test scripts/tests/ci-results.test.mjs
+          node scripts/ci-results.mjs vitest .ci-evidence/fase-2b/frontend-unit.json 450
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: frontend-${{ github.run_attempt }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            inventario_front/.ci-evidence/fase-2b/
+            inventario_front/.ci-evidence/fase-1/**/*.json
+            inventario_front/.ci-evidence/fase-1/**/*.log
+            inventario_front/.ci-evidence/fase-2a/*.json
+            inventario_front/.ci-evidence/fase-2a/*.log
+            inventario_front/.ci-evidence/fase-2a/playwright-gateway-final/results.json
+  backend:
+    needs: revisions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          path: inventario_back
+          persist-credentials: false
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: Dennis9901/inventario_front
+          ref: ${{ needs.revisions.outputs.companion }}
+          token: ${{ secrets.CI_REPO_READ_TOKEN || github.token }}
+          path: inventario_front
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.21.0'
+          cache: npm
+          cache-dependency-path: |
+            inventario_front/package-lock.json
+            inventario_back/package-lock.json
+      - name: Install locked dependencies
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund --prefix inventario_front
+          npm ci --ignore-scripts --no-audit --no-fund --prefix inventario_back
+      - name: Record tested revisions
+        run: |
+          mkdir -p inventario_front/.ci-evidence/fase-2b
+          git -C inventario_front rev-parse HEAD > inventario_front/.ci-evidence/fase-2b/frontend-sha.txt
+          git -C inventario_back rev-parse HEAD > inventario_front/.ci-evidence/fase-2b/backend-sha.txt
+      - name: backend quality gate
+        run: |
+          cd inventario_back
+          npm run contract:emit
+          git diff --exit-code -- src/prisma/contract.json src/prisma/contract.d.ts src/prisma/contract.prisma src/prisma/db.ts
+          npm exec -- tsc --noEmit
+          npm run lint
+          npm test -- --configLoader runner --no-file-parallelism --reporter=json --outputFile=../inventario_front/.ci-evidence/fase-2b/backend-unit.json
+          npm run build
+          cd ../inventario_front
+          node scripts/ci-results.mjs vitest .ci-evidence/fase-2b/backend-unit.json 567
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: backend-${{ github.run_attempt }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            inventario_front/.ci-evidence/fase-2b/
+            inventario_front/.ci-evidence/fase-1/**/*.json
+            inventario_front/.ci-evidence/fase-1/**/*.log
+            inventario_front/.ci-evidence/fase-2a/*.json
+            inventario_front/.ci-evidence/fase-2a/*.log
+            inventario_front/.ci-evidence/fase-2a/playwright-gateway-final/results.json
+  contracts:
+    needs: revisions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          path: inventario_back
+          persist-credentials: false
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: Dennis9901/inventario_front
+          ref: ${{ needs.revisions.outputs.companion }}
+          token: ${{ secrets.CI_REPO_READ_TOKEN || github.token }}
+          path: inventario_front
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.21.0'
+          cache: npm
+          cache-dependency-path: |
+            inventario_front/package-lock.json
+            inventario_back/package-lock.json
+      - name: Install locked dependencies
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund --prefix inventario_front
+          npm ci --ignore-scripts --no-audit --no-fund --prefix inventario_back
+      - name: Record tested revisions
+        run: |
+          mkdir -p inventario_front/.ci-evidence/fase-2b
+          git -C inventario_front rev-parse HEAD > inventario_front/.ci-evidence/fase-2b/frontend-sha.txt
+          git -C inventario_back rev-parse HEAD > inventario_front/.ci-evidence/fase-2b/backend-sha.txt
+      - name: contracts quality gate
+        run: |
+          cd inventario_front
+          npm run api:check
+          node scripts/ci-contracts.mjs
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: contracts-${{ github.run_attempt }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            inventario_front/.ci-evidence/fase-2b/
+            inventario_front/.ci-evidence/fase-1/**/*.json
+            inventario_front/.ci-evidence/fase-1/**/*.log
+            inventario_front/.ci-evidence/fase-2a/*.json
+            inventario_front/.ci-evidence/fase-2a/*.log
+            inventario_front/.ci-evidence/fase-2a/playwright-gateway-final/results.json
+  docker:
+    needs: revisions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          path: inventario_back
+          persist-credentials: false
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: Dennis9901/inventario_front
+          ref: ${{ needs.revisions.outputs.companion }}
+          token: ${{ secrets.CI_REPO_READ_TOKEN || github.token }}
+          path: inventario_front
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.21.0'
+          cache: npm
+          cache-dependency-path: |
+            inventario_front/package-lock.json
+            inventario_back/package-lock.json
+      - name: Install locked dependencies
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund --prefix inventario_front
+          npm ci --ignore-scripts --no-audit --no-fund --prefix inventario_back
+      - name: Record tested revisions
+        run: |
+          mkdir -p inventario_front/.ci-evidence/fase-2b
+          git -C inventario_front rev-parse HEAD > inventario_front/.ci-evidence/fase-2b/frontend-sha.txt
+          git -C inventario_back rev-parse HEAD > inventario_front/.ci-evidence/fase-2b/backend-sha.txt
+      - name: docker quality gate
+        run: |
+          docker build --target runtime -t inventario-front:phase2a inventario_front
+          docker build --target runtime -t inventario-back:phase2a inventario_back
+          docker build --target tools -t inventario-back-tools:phase2a inventario_back
+          cd inventario_front
+          npx playwright install --with-deps chromium
+          node scripts/phase2a-local.mjs validation --representative --skip-integration
+          node scripts/ci-results.mjs playwright .ci-evidence/fase-2a/playwright-gateway-final/results.json 3
+      - name: Clean owned validation stack after preparation failure
+        if: always()
+        working-directory: inventario_front
+        run: |
+          if test -f .env.production.validation.state.json; then
+            node scripts/ci-cleanup.mjs validation
+          fi
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: docker-${{ github.run_attempt }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            inventario_front/.ci-evidence/fase-2b/
+            inventario_front/.ci-evidence/fase-1/**/*.json
+            inventario_front/.ci-evidence/fase-1/**/*.log
+            inventario_front/.ci-evidence/fase-2a/*.json
+            inventario_front/.ci-evidence/fase-2a/*.log
+            inventario_front/.ci-evidence/fase-2a/playwright-gateway-final/results.json
+  e2e:
+    needs: [revisions, frontend, backend, contracts, docker]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        cycle: [ci-1, ci-2]
+    env:
+      E2E_DB_KIND: test
+      E2E_ALLOW_MUTATIONS: '1'
+      E2E_CYCLE: ${{ matrix.cycle }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          path: inventario_back
+          persist-credentials: false
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: Dennis9901/inventario_front
+          ref: ${{ needs.revisions.outputs.companion }}
+          token: ${{ secrets.CI_REPO_READ_TOKEN || github.token }}
+          path: inventario_front
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.21.0'
+          cache: npm
+          cache-dependency-path: |
+            inventario_front/package-lock.json
+            inventario_back/package-lock.json
+      - name: Install locked dependencies
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund --prefix inventario_front
+          npm ci --ignore-scripts --no-audit --no-fund --prefix inventario_back
+      - name: Record tested revisions
+        run: |
+          mkdir -p inventario_front/.ci-evidence/fase-2b
+          git -C inventario_front rev-parse HEAD > inventario_front/.ci-evidence/fase-2b/frontend-sha.txt
+          git -C inventario_back rev-parse HEAD > inventario_front/.ci-evidence/fase-2b/backend-sha.txt
+      - name: Install Chromium
+        working-directory: inventario_front
+        run: npx playwright install --with-deps chromium
+      - name: Create owned disposable PostgreSQL
+        working-directory: inventario_front
+        run: node scripts/e2e-lifecycle.mjs up
+      - name: Integration and full Playwright suite
+        working-directory: inventario_front
+        run: |
+          node scripts/e2e-run.mjs --integration
+          node scripts/ci-contracts.mjs
+          node scripts/ci-results.mjs vitest ".ci-evidence/fase-1/$E2E_CYCLE/backend-integration.json" 312
+          node scripts/ci-results.mjs playwright ".ci-evidence/fase-1/$E2E_CYCLE/results.json" 26 --allow-reader
+      - name: Business evidence
+        working-directory: inventario_front
+        run: node scripts/e2e-lifecycle.mjs evidence
+      - name: Verify destruction
+        if: always()
+        working-directory: inventario_front
+        run: node scripts/ci-cleanup.mjs e2e
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: e2e-${{ matrix.cycle }}-${{ github.run_attempt }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            inventario_front/.ci-evidence/fase-2b/
+            inventario_front/.ci-evidence/fase-1/**/*.json
+            inventario_front/.ci-evidence/fase-1/**/*.log
+            inventario_front/.ci-evidence/fase-2a/*.json
+            inventario_front/.ci-evidence/fase-2a/*.log
+            inventario_front/.ci-evidence/fase-2a/playwright-gateway-final/results.json
+  certification:
+    name: CI certification
+    if: always()
+    needs: [revisions, frontend, backend, contracts, docker, e2e]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Enforce all gates
+        env:
+          GATES: ${{ toJSON(needs) }}
+        run: |
+          node -e 'const gates=JSON.parse(process.env.GATES); for(const [name,gate] of Object.entries(gates)){console.log(`${name}: ${gate.result}`); if(gate.result!=="success")process.exitCode=1;}'
+      - name: Certification summary
+        if: always()
+        env:
+          GATES: ${{ toJSON(needs) }}
+          CURRENT_SHA: ${{ github.sha }}
+          COMPANION_SHA: ${{ needs.revisions.outputs.companion }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          node -e 'const fs=require("fs"); const gates=JSON.parse(process.env.GATES); fs.writeFileSync("certification.json",JSON.stringify({passed:Object.values(gates).every(g=>g.result==="success"),repository:process.env.REPOSITORY,currentSha:process.env.CURRENT_SHA,companionSha:process.env.COMPANION_SHA,runId:process.env.RUN_ID,gates},null,2));'
+          node -e 'const fs=require("fs"); const gates=JSON.parse(process.env.GATES); fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,"## CI certification\n\n"+Object.entries(gates).map(([name,g])=>`- ${name}: ${g.result}`).join("\n")+"\n");'
+      - name: Upload certification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: certification-${{ github.run_attempt }}
+          path: certification.json
+          if-no-files-found: error
+          retention-days: 30

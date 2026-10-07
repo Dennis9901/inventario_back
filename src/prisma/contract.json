@@ -4,6 +4,10 @@
   "target": "postgres",
   "profileHash": "3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2",
   "roots": {
+    "auditoria": {
+      "model": "Auditoria",
+      "namespace": "public"
+    },
     "categoria": {
       "model": "Categoria",
       "namespace": "public"
@@ -20,12 +24,44 @@
       "model": "DetalleCompra",
       "namespace": "public"
     },
+    "detalleDevolucionCompra": {
+      "model": "DetalleDevolucionCompra",
+      "namespace": "public"
+    },
+    "detalleDevolucionVenta": {
+      "model": "DetalleDevolucionVenta",
+      "namespace": "public"
+    },
     "detalleVenta": {
       "model": "DetalleVenta",
       "namespace": "public"
     },
+    "devolucionCompra": {
+      "model": "DevolucionCompra",
+      "namespace": "public"
+    },
+    "devolucionVenta": {
+      "model": "DevolucionVenta",
+      "namespace": "public"
+    },
+    "domicilioCliente": {
+      "model": "DomicilioCliente",
+      "namespace": "public"
+    },
     "existencia": {
       "model": "Existencia",
+      "namespace": "public"
+    },
+    "importacion": {
+      "model": "Importacion",
+      "namespace": "public"
+    },
+    "importacionFila": {
+      "model": "ImportacionFila",
+      "namespace": "public"
+    },
+    "listaPrecio": {
+      "model": "ListaPrecio",
       "namespace": "public"
     },
     "movimientoInventario": {
@@ -36,12 +72,20 @@
       "model": "Producto",
       "namespace": "public"
     },
+    "productoPrecio": {
+      "model": "ProductoPrecio",
+      "namespace": "public"
+    },
     "proveedor": {
       "model": "Proveedor",
       "namespace": "public"
     },
     "rol": {
       "model": "Rol",
+      "namespace": "public"
+    },
+    "unidadMedida": {
+      "model": "UnidadMedida",
       "namespace": "public"
     },
     "usuario": {
@@ -74,6 +118,65 @@
               }
             ]
           },
+          "EstadoDevolucion": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "BORRADOR",
+                "value": "BORRADOR"
+              },
+              {
+                "name": "PROCESADA",
+                "value": "PROCESADA"
+              },
+              {
+                "name": "CANCELADA",
+                "value": "CANCELADA"
+              }
+            ]
+          },
+          "EstadoImportacion": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "PREVIEW",
+                "value": "PREVIEW"
+              },
+              {
+                "name": "PROCESANDO",
+                "value": "PROCESANDO"
+              },
+              {
+                "name": "COMPLETADA",
+                "value": "COMPLETADA"
+              },
+              {
+                "name": "FALLIDA",
+                "value": "FALLIDA"
+              },
+              {
+                "name": "CANCELADA",
+                "value": "CANCELADA"
+              }
+            ]
+          },
+          "EstadoImportacionFila": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "VALIDA",
+                "value": "VALIDA"
+              },
+              {
+                "name": "ADVERTENCIA",
+                "value": "ADVERTENCIA"
+              },
+              {
+                "name": "ERROR",
+                "value": "ERROR"
+              }
+            ]
+          },
           "EstadoVenta": {
             "codecId": "pg/text@1",
             "members": [
@@ -88,6 +191,23 @@
               {
                 "name": "CANCELADA",
                 "value": "CANCELADA"
+              }
+            ]
+          },
+          "TipoImportacion": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "CLIENTES",
+                "value": "CLIENTES"
+              },
+              {
+                "name": "PRODUCTOS",
+                "value": "PRODUCTOS"
+              },
+              {
+                "name": "PRECIOS",
+                "value": "PRECIOS"
               }
             ]
           },
@@ -110,6 +230,124 @@
           }
         },
         "models": {
+          "Auditoria": {
+            "fields": {
+              "accion": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "descripcion": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "entidad": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "entidadId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "metadata": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "requestId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "usuarioId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "usuario": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "usuarioId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Usuario",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "accion": {
+                  "column": "accion"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "descripcion": {
+                  "column": "descripcion"
+                },
+                "entidad": {
+                  "column": "entidad"
+                },
+                "entidadId": {
+                  "column": "entidadId"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "metadata": {
+                  "column": "metadata"
+                },
+                "requestId": {
+                  "column": "requestId"
+                },
+                "usuarioId": {
+                  "column": "usuarioId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "auditoria"
+            }
+          },
           "Categoria": {
             "fields": {
               "activo": {
@@ -213,6 +451,13 @@
                   "kind": "scalar"
                 }
               },
+              "celular": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "createdAt": {
                 "nullable": false,
                 "type": {
@@ -234,6 +479,13 @@
                   "kind": "scalar"
                 }
               },
+              "emailAlterno": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "id": {
                 "nullable": false,
                 "type": {
@@ -248,7 +500,35 @@
                   "kind": "scalar"
                 }
               },
+              "nombreComercial": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "numeroRegistroTributario": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "razonSocial": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "regimenFiscal": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "residenciaFiscal": {
                 "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
@@ -275,9 +555,32 @@
                   "codecId": "pg/timestamptz-string@1",
                   "kind": "scalar"
                 }
+              },
+              "usoCfdi": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
               }
             },
             "relations": {
+              "domicilioFiscal": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "clienteId"
+                  ]
+                },
+                "to": {
+                  "model": "DomicilioCliente",
+                  "namespace": "public"
+                }
+              },
               "ventas": {
                 "cardinality": "1:N",
                 "on": {
@@ -302,6 +605,9 @@
                 "apellido": {
                   "column": "apellido"
                 },
+                "celular": {
+                  "column": "celular"
+                },
                 "createdAt": {
                   "column": "createdAt"
                 },
@@ -311,14 +617,29 @@
                 "email": {
                   "column": "email"
                 },
+                "emailAlterno": {
+                  "column": "emailAlterno"
+                },
                 "id": {
                   "column": "id"
                 },
                 "nombre": {
                   "column": "nombre"
                 },
+                "nombreComercial": {
+                  "column": "nombreComercial"
+                },
+                "numeroRegistroTributario": {
+                  "column": "numeroRegistroTributario"
+                },
                 "razonSocial": {
                   "column": "razonSocial"
+                },
+                "regimenFiscal": {
+                  "column": "regimenFiscal"
+                },
+                "residenciaFiscal": {
+                  "column": "residenciaFiscal"
                 },
                 "rfc": {
                   "column": "rfc"
@@ -328,6 +649,9 @@
                 },
                 "updatedAt": {
                   "column": "updatedAt"
+                },
+                "usoCfdi": {
+                  "column": "usoCfdi"
                 }
               },
               "namespaceId": "public",
@@ -463,6 +787,21 @@
                 },
                 "to": {
                   "model": "DetalleCompra",
+                  "namespace": "public"
+                }
+              },
+              "devoluciones": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "compraId"
+                  ]
+                },
+                "to": {
+                  "model": "DevolucionCompra",
                   "namespace": "public"
                 }
               },
@@ -614,6 +953,21 @@
                   "namespace": "public"
                 }
               },
+              "devoluciones": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "detalleCompraId"
+                  ]
+                },
+                "to": {
+                  "model": "DetalleDevolucionCompra",
+                  "namespace": "public"
+                }
+              },
               "producto": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -657,6 +1011,306 @@
               },
               "namespaceId": "public",
               "table": "detalleCompra"
+            }
+          },
+          "DetalleDevolucionCompra": {
+            "fields": {
+              "cantidad": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "costoUnitario": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "detalleCompraId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "devolucionCompraId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "productoId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "subtotal": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "detalleCompra": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "detalleCompraId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "DetalleCompra",
+                  "namespace": "public"
+                }
+              },
+              "devolucionCompra": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "devolucionCompraId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "DevolucionCompra",
+                  "namespace": "public"
+                }
+              },
+              "producto": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "productoId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Producto",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "cantidad": {
+                  "column": "cantidad"
+                },
+                "costoUnitario": {
+                  "column": "costoUnitario"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "detalleCompraId": {
+                  "column": "detalleCompraId"
+                },
+                "devolucionCompraId": {
+                  "column": "devolucionCompraId"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "productoId": {
+                  "column": "productoId"
+                },
+                "subtotal": {
+                  "column": "subtotal"
+                }
+              },
+              "namespaceId": "public",
+              "table": "detalleDevolucionCompra"
+            }
+          },
+          "DetalleDevolucionVenta": {
+            "fields": {
+              "cantidad": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "costoSubtotal": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar"
+                }
+              },
+              "costoUnitario": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "detalleVentaId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "devolucionVentaId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "precioUnitario": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar"
+                }
+              },
+              "productoId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "subtotal": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "detalleVenta": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "detalleVentaId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "DetalleVenta",
+                  "namespace": "public"
+                }
+              },
+              "devolucionVenta": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "devolucionVentaId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "DevolucionVenta",
+                  "namespace": "public"
+                }
+              },
+              "producto": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "productoId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Producto",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "cantidad": {
+                  "column": "cantidad"
+                },
+                "costoSubtotal": {
+                  "column": "costoSubtotal"
+                },
+                "costoUnitario": {
+                  "column": "costoUnitario"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "detalleVentaId": {
+                  "column": "detalleVentaId"
+                },
+                "devolucionVentaId": {
+                  "column": "devolucionVentaId"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "precioUnitario": {
+                  "column": "precioUnitario"
+                },
+                "productoId": {
+                  "column": "productoId"
+                },
+                "subtotal": {
+                  "column": "subtotal"
+                }
+              },
+              "namespaceId": "public",
+              "table": "detalleDevolucionVenta"
             }
           },
           "DetalleVenta": {
@@ -726,6 +1380,21 @@
               }
             },
             "relations": {
+              "devoluciones": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "detalleVentaId"
+                  ]
+                },
+                "to": {
+                  "model": "DetalleDevolucionVenta",
+                  "namespace": "public"
+                }
+              },
               "producto": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -791,6 +1460,586 @@
               },
               "namespaceId": "public",
               "table": "detalleVenta"
+            }
+          },
+          "DevolucionCompra": {
+            "fields": {
+              "compraId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdByUsuarioId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "estado": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "EstadoDevolucion",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "fechaProcesamiento": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "folio": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "motivo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "observacion": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "procesadaPorUsuarioId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "subtotal": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "compra": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "compraId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Compra",
+                  "namespace": "public"
+                }
+              },
+              "creadoPor": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "createdByUsuarioId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Usuario",
+                  "namespace": "public"
+                }
+              },
+              "detalles": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "devolucionCompraId"
+                  ]
+                },
+                "to": {
+                  "model": "DetalleDevolucionCompra",
+                  "namespace": "public"
+                }
+              },
+              "procesadoPor": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "procesadaPorUsuarioId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Usuario",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "compraId": {
+                  "column": "compraId"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "createdByUsuarioId": {
+                  "column": "createdByUsuarioId"
+                },
+                "estado": {
+                  "column": "estado"
+                },
+                "fechaProcesamiento": {
+                  "column": "fechaProcesamiento"
+                },
+                "folio": {
+                  "column": "folio"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "motivo": {
+                  "column": "motivo"
+                },
+                "observacion": {
+                  "column": "observacion"
+                },
+                "procesadaPorUsuarioId": {
+                  "column": "procesadaPorUsuarioId"
+                },
+                "subtotal": {
+                  "column": "subtotal"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "devolucionCompra"
+            }
+          },
+          "DevolucionVenta": {
+            "fields": {
+              "costoTotal": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdByUsuarioId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "estado": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "EstadoDevolucion",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "fechaProcesamiento": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "folio": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "motivo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "observacion": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "procesadaPorUsuarioId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "subtotal": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "ventaId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "creadoPor": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "createdByUsuarioId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Usuario",
+                  "namespace": "public"
+                }
+              },
+              "detalles": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "devolucionVentaId"
+                  ]
+                },
+                "to": {
+                  "model": "DetalleDevolucionVenta",
+                  "namespace": "public"
+                }
+              },
+              "procesadoPor": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "procesadaPorUsuarioId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Usuario",
+                  "namespace": "public"
+                }
+              },
+              "venta": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "ventaId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Venta",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "costoTotal": {
+                  "column": "costoTotal"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "createdByUsuarioId": {
+                  "column": "createdByUsuarioId"
+                },
+                "estado": {
+                  "column": "estado"
+                },
+                "fechaProcesamiento": {
+                  "column": "fechaProcesamiento"
+                },
+                "folio": {
+                  "column": "folio"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "motivo": {
+                  "column": "motivo"
+                },
+                "observacion": {
+                  "column": "observacion"
+                },
+                "procesadaPorUsuarioId": {
+                  "column": "procesadaPorUsuarioId"
+                },
+                "subtotal": {
+                  "column": "subtotal"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                },
+                "ventaId": {
+                  "column": "ventaId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "devolucionVenta"
+            }
+          },
+          "DomicilioCliente": {
+            "fields": {
+              "calle": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "clienteId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "codigoPostal": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "colonia": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "estado": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "localidad": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "municipio": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "numeroExterior": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "numeroInterior": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "pais": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "referencia": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "cliente": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "clienteId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Cliente",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "calle": {
+                  "column": "calle"
+                },
+                "clienteId": {
+                  "column": "clienteId"
+                },
+                "codigoPostal": {
+                  "column": "codigoPostal"
+                },
+                "colonia": {
+                  "column": "colonia"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "estado": {
+                  "column": "estado"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "localidad": {
+                  "column": "localidad"
+                },
+                "municipio": {
+                  "column": "municipio"
+                },
+                "numeroExterior": {
+                  "column": "numeroExterior"
+                },
+                "numeroInterior": {
+                  "column": "numeroInterior"
+                },
+                "pais": {
+                  "column": "pais"
+                },
+                "referencia": {
+                  "column": "referencia"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "domicilioCliente"
             }
           },
           "Existencia": {
@@ -869,6 +2118,497 @@
               },
               "namespaceId": "public",
               "table": "existencia"
+            }
+          },
+          "Importacion": {
+            "fields": {
+              "completedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "configuracion": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "confirmedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "errorCodigo": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "estado": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "EstadoImportacion",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "failedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "filasAdvertencia": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "filasError": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "filasValidas": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "hashArchivo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "hashPlan": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "hojas": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "nombreArchivo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "tipo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "TipoImportacion",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "totalFilas": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "usuarioId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "filas": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "importacionId"
+                  ]
+                },
+                "to": {
+                  "model": "ImportacionFila",
+                  "namespace": "public"
+                }
+              },
+              "usuario": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "usuarioId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Usuario",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "completedAt": {
+                  "column": "completedAt"
+                },
+                "configuracion": {
+                  "column": "configuracion"
+                },
+                "confirmedAt": {
+                  "column": "confirmedAt"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "errorCodigo": {
+                  "column": "errorCodigo"
+                },
+                "estado": {
+                  "column": "estado"
+                },
+                "failedAt": {
+                  "column": "failedAt"
+                },
+                "filasAdvertencia": {
+                  "column": "filasAdvertencia"
+                },
+                "filasError": {
+                  "column": "filasError"
+                },
+                "filasValidas": {
+                  "column": "filasValidas"
+                },
+                "hashArchivo": {
+                  "column": "hashArchivo"
+                },
+                "hashPlan": {
+                  "column": "hashPlan"
+                },
+                "hojas": {
+                  "column": "hojas"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "nombreArchivo": {
+                  "column": "nombreArchivo"
+                },
+                "tipo": {
+                  "column": "tipo"
+                },
+                "totalFilas": {
+                  "column": "totalFilas"
+                },
+                "usuarioId": {
+                  "column": "usuarioId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "importacion"
+            }
+          },
+          "ImportacionFila": {
+            "fields": {
+              "advertencias": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "clave": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "datosNormalizados": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "errores": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "estado": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "EstadoImportacionFila",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "importacionId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "numeroFila": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "plan": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "resultado": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "importacion": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "importacionId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Importacion",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "advertencias": {
+                  "column": "advertencias"
+                },
+                "clave": {
+                  "column": "clave"
+                },
+                "datosNormalizados": {
+                  "column": "datosNormalizados"
+                },
+                "errores": {
+                  "column": "errores"
+                },
+                "estado": {
+                  "column": "estado"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "importacionId": {
+                  "column": "importacionId"
+                },
+                "numeroFila": {
+                  "column": "numeroFila"
+                },
+                "plan": {
+                  "column": "plan"
+                },
+                "resultado": {
+                  "column": "resultado"
+                }
+              },
+              "namespaceId": "public",
+              "table": "importacionFila"
+            }
+          },
+          "ListaPrecio": {
+            "fields": {
+              "activo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "codigo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "descripcion": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "esPredeterminada": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "nombre": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "precios": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "listaPrecioId"
+                  ]
+                },
+                "to": {
+                  "model": "ProductoPrecio",
+                  "namespace": "public"
+                }
+              },
+              "ventas": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "listaPrecioId"
+                  ]
+                },
+                "to": {
+                  "model": "Venta",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "activo": {
+                  "column": "activo"
+                },
+                "codigo": {
+                  "column": "codigo"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "descripcion": {
+                  "column": "descripcion"
+                },
+                "esPredeterminada": {
+                  "column": "esPredeterminada"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "nombre": {
+                  "column": "nombre"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "listaPrecio"
             }
           },
           "MovimientoInventario": {
@@ -1027,6 +2767,13 @@
                   "kind": "scalar"
                 }
               },
+              "claveProductoServicioSat": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "codigoBarras": {
                 "nullable": true,
                 "type": {
@@ -1069,6 +2816,13 @@
                   "kind": "scalar"
                 }
               },
+              "objetoImpuestoSat": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "precio": {
                 "nullable": false,
                 "type": {
@@ -1094,6 +2848,13 @@
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "unidadMedidaId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
                   "kind": "scalar"
                 }
               },
@@ -1134,6 +2895,36 @@
                 },
                 "to": {
                   "model": "DetalleCompra",
+                  "namespace": "public"
+                }
+              },
+              "detallesDevolucionCompra": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "productoId"
+                  ]
+                },
+                "to": {
+                  "model": "DetalleDevolucionCompra",
+                  "namespace": "public"
+                }
+              },
+              "detallesDevolucionVenta": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "productoId"
+                  ]
+                },
+                "to": {
+                  "model": "DetalleDevolucionVenta",
                   "namespace": "public"
                 }
               },
@@ -1182,6 +2973,37 @@
                   "model": "MovimientoInventario",
                   "namespace": "public"
                 }
+              },
+              "precios": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "productoId"
+                  ]
+                },
+                "to": {
+                  "model": "ProductoPrecio",
+                  "namespace": "public"
+                }
+              },
+              "unidadCatalogo": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "unidadMedidaId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "UnidadMedida",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
@@ -1191,6 +3013,9 @@
                 },
                 "categoriaId": {
                   "column": "categoriaId"
+                },
+                "claveProductoServicioSat": {
+                  "column": "claveProductoServicioSat"
                 },
                 "codigoBarras": {
                   "column": "codigoBarras"
@@ -1210,6 +3035,9 @@
                 "nombre": {
                   "column": "nombre"
                 },
+                "objetoImpuestoSat": {
+                  "column": "objetoImpuestoSat"
+                },
                 "precio": {
                   "column": "precio"
                 },
@@ -1222,12 +3050,149 @@
                 "unidadMedida": {
                   "column": "unidadMedida"
                 },
+                "unidadMedidaId": {
+                  "column": "unidadMedidaId"
+                },
                 "updatedAt": {
                   "column": "updatedAt"
                 }
               },
               "namespaceId": "public",
               "table": "producto"
+            }
+          },
+          "ProductoPrecio": {
+            "fields": {
+              "activo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "listaPrecioId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "precio": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar"
+                }
+              },
+              "productoId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "vigenciaDesde": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "vigenciaHasta": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "listaPrecio": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "listaPrecioId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "ListaPrecio",
+                  "namespace": "public"
+                }
+              },
+              "producto": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "productoId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Producto",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "activo": {
+                  "column": "activo"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "listaPrecioId": {
+                  "column": "listaPrecioId"
+                },
+                "precio": {
+                  "column": "precio"
+                },
+                "productoId": {
+                  "column": "productoId"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                },
+                "vigenciaDesde": {
+                  "column": "vigenciaDesde"
+                },
+                "vigenciaHasta": {
+                  "column": "vigenciaHasta"
+                }
+              },
+              "namespaceId": "public",
+              "table": "productoPrecio"
             }
           },
           "Proveedor": {
@@ -1454,6 +3419,93 @@
               "table": "rol"
             }
           },
+          "UnidadMedida": {
+            "fields": {
+              "activo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "clave": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "nombre": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "productos": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "unidadMedidaId"
+                  ]
+                },
+                "to": {
+                  "model": "Producto",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "activo": {
+                  "column": "activo"
+                },
+                "clave": {
+                  "column": "clave"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "nombre": {
+                  "column": "nombre"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "unidadMedida"
+            }
+          },
           "Usuario": {
             "fields": {
               "activo": {
@@ -1521,6 +3573,21 @@
               }
             },
             "relations": {
+              "auditorias": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "usuarioId"
+                  ]
+                },
+                "to": {
+                  "model": "Auditoria",
+                  "namespace": "public"
+                }
+              },
               "comprasCreadas": {
                 "cardinality": "1:N",
                 "on": {
@@ -1548,6 +3615,81 @@
                 },
                 "to": {
                   "model": "Compra",
+                  "namespace": "public"
+                }
+              },
+              "devolucionesCompraCreadas": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "createdByUsuarioId"
+                  ]
+                },
+                "to": {
+                  "model": "DevolucionCompra",
+                  "namespace": "public"
+                }
+              },
+              "devolucionesCompraProcesadas": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "procesadaPorUsuarioId"
+                  ]
+                },
+                "to": {
+                  "model": "DevolucionCompra",
+                  "namespace": "public"
+                }
+              },
+              "devolucionesVentaCreadas": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "createdByUsuarioId"
+                  ]
+                },
+                "to": {
+                  "model": "DevolucionVenta",
+                  "namespace": "public"
+                }
+              },
+              "devolucionesVentaProcesadas": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "procesadaPorUsuarioId"
+                  ]
+                },
+                "to": {
+                  "model": "DevolucionVenta",
+                  "namespace": "public"
+                }
+              },
+              "importaciones": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "usuarioId"
+                  ]
+                },
+                "to": {
+                  "model": "Importacion",
                   "namespace": "public"
                 }
               },
@@ -1725,6 +3867,13 @@
                   "kind": "scalar"
                 }
               },
+              "listaPrecioId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "observacion": {
                 "nullable": true,
                 "type": {
@@ -1824,6 +3973,37 @@
                   "model": "DetalleVenta",
                   "namespace": "public"
                 }
+              },
+              "devoluciones": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "ventaId"
+                  ]
+                },
+                "to": {
+                  "model": "DevolucionVenta",
+                  "namespace": "public"
+                }
+              },
+              "listaPrecio": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "listaPrecioId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "ListaPrecio",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
@@ -1858,6 +4038,9 @@
                 "impuestos": {
                   "column": "impuestos"
                 },
+                "listaPrecioId": {
+                  "column": "listaPrecioId"
+                },
                 "observacion": {
                   "column": "observacion"
                 },
@@ -1887,6 +4070,114 @@
       "public": {
         "entries": {
           "table": {
+            "auditoria": {
+              "checks": [
+                {
+                  "expression": "length(\"requestId\") = 36 AND length(accion) BETWEEN 1 AND 80 AND length(entidad) BETWEEN 1 AND 80",
+                  "name": "auditoria_campos_validos_0b137340",
+                  "prefix": "auditoria_campos_validos"
+                }
+              ],
+              "columns": {
+                "accion": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "descripcion": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "entidad": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "entidadId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "metadata": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "requestId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "usuarioId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "setNull",
+                  "source": {
+                    "columns": [
+                      "usuarioId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "auditoria"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "usuario"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "createdAt",
+                    "id"
+                  ],
+                  "name": "auditoria_createdAt_id_idx_3855cff1",
+                  "prefix": "auditoria_createdAt_id_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "usuarioId"
+                  ],
+                  "name": "auditoria_usuarioId_idx_5f01c7d6",
+                  "prefix": "auditoria_usuarioId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
             "categoria": {
               "columns": {
                 "activo": {
@@ -1963,6 +4254,11 @@
                   "nativeType": "text",
                   "nullable": true
                 },
+                "celular": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "createdAt": {
                   "codecId": "pg/timestamptz-string@1",
                   "default": {
@@ -1982,6 +4278,11 @@
                   "nativeType": "text",
                   "nullable": true
                 },
+                "emailAlterno": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "id": {
                   "codecId": "pg/int4@1",
                   "default": {
@@ -1996,7 +4297,27 @@
                   "nativeType": "text",
                   "nullable": false
                 },
+                "nombreComercial": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "numeroRegistroTributario": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "razonSocial": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "regimenFiscal": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "residenciaFiscal": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": true
@@ -2015,6 +4336,11 @@
                   "codecId": "pg/timestamptz-string@1",
                   "nativeType": "timestamptz",
                   "nullable": false
+                },
+                "usoCfdi": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
                 }
               },
               "foreignKeys": [],
@@ -2357,6 +4683,318 @@
                 }
               ]
             },
+            "detalleDevolucionCompra": {
+              "checks": [
+                {
+                  "expression": "cantidad > 0 AND \"costoUnitario\" >= 0 AND subtotal = cantidad * \"costoUnitario\"",
+                  "name": "detalle_devolucion_compra_importes_validos_699c8d68",
+                  "prefix": "detalle_devolucion_compra_importes_validos"
+                }
+              ],
+              "columns": {
+                "cantidad": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "costoUnitario": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "detalleCompraId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "devolucionCompraId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "productoId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "subtotal": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "devolucionCompraId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "detalleDevolucionCompra"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "devolucionCompra"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "detalleCompraId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "detalleDevolucionCompra"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "detalleCompra"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "productoId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "detalleDevolucionCompra"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "producto"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "detalleCompraId"
+                  ],
+                  "name": "detalleDevolucionCompra_detalleCompraId_idx_7c994ef4",
+                  "prefix": "detalleDevolucionCompra_detalleCompraId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "devolucionCompraId"
+                  ],
+                  "name": "detalleDevolucionCompra_devolucionCompraId_idx_4ad8aed2",
+                  "prefix": "detalleDevolucionCompra_devolucionCompraId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "productoId"
+                  ],
+                  "name": "detalleDevolucionCompra_productoId_idx_cc0c10f0",
+                  "prefix": "detalleDevolucionCompra_productoId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "devolucionCompraId",
+                    "detalleCompraId"
+                  ]
+                }
+              ]
+            },
+            "detalleDevolucionVenta": {
+              "checks": [
+                {
+                  "expression": "cantidad > 0 AND \"costoUnitario\" >= 0 AND \"precioUnitario\" >= 0 AND subtotal = cantidad * \"precioUnitario\" AND \"costoSubtotal\" = cantidad * \"costoUnitario\"",
+                  "name": "detalle_devolucion_venta_importes_validos_7d32b172",
+                  "prefix": "detalle_devolucion_venta_importes_validos"
+                }
+              ],
+              "columns": {
+                "cantidad": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "costoSubtotal": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false
+                },
+                "costoUnitario": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "detalleVentaId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "devolucionVentaId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "precioUnitario": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false
+                },
+                "productoId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "subtotal": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "devolucionVentaId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "detalleDevolucionVenta"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "devolucionVenta"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "detalleVentaId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "detalleDevolucionVenta"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "detalleVenta"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "productoId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "detalleDevolucionVenta"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "producto"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "detalleVentaId"
+                  ],
+                  "name": "detalleDevolucionVenta_detalleVentaId_idx_d213b404",
+                  "prefix": "detalleDevolucionVenta_detalleVentaId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "devolucionVentaId"
+                  ],
+                  "name": "detalleDevolucionVenta_devolucionVentaId_idx_5fb3df2f",
+                  "prefix": "detalleDevolucionVenta_devolucionVentaId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "productoId"
+                  ],
+                  "name": "detalleDevolucionVenta_productoId_idx_cc0c10f0",
+                  "prefix": "detalleDevolucionVenta_productoId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "devolucionVentaId",
+                    "detalleVentaId"
+                  ]
+                }
+              ]
+            },
             "detalleVenta": {
               "checks": [
                 {
@@ -2488,6 +5126,525 @@
                 }
               ]
             },
+            "devolucionCompra": {
+              "checks": [
+                {
+                  "expression": "\"estado\" IN ('BORRADOR', 'PROCESADA', 'CANCELADA')",
+                  "name": "devolucionCompra_estado_check_92c58b33",
+                  "prefix": "devolucionCompra_estado_check"
+                },
+                {
+                  "expression": "estado IN ('BORRADOR', 'PROCESADA', 'CANCELADA')",
+                  "name": "devolucion_compra_estado_valido_b2cd6f04",
+                  "prefix": "devolucion_compra_estado_valido"
+                },
+                {
+                  "expression": "subtotal >= 0",
+                  "name": "devolucion_compra_importes_validos_3ccfff9f",
+                  "prefix": "devolucion_compra_importes_validos"
+                },
+                {
+                  "expression": "length(trim(motivo)) > 0",
+                  "name": "devolucion_compra_motivo_requerido_905a7f7a",
+                  "prefix": "devolucion_compra_motivo_requerido"
+                },
+                {
+                  "expression": "(estado = 'PROCESADA' AND \"procesadaPorUsuarioId\" IS NOT NULL AND \"fechaProcesamiento\" IS NOT NULL) OR (estado <> 'PROCESADA' AND \"procesadaPorUsuarioId\" IS NULL AND \"fechaProcesamiento\" IS NULL)",
+                  "name": "devolucion_compra_procesamiento_auditado_8a3ce104",
+                  "prefix": "devolucion_compra_procesamiento_auditado"
+                }
+              ],
+              "columns": {
+                "compraId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "createdByUsuarioId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "estado": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "BORRADOR"
+                  },
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EstadoDevolucion",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "fechaProcesamiento": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "folio": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "motivo": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "observacion": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "procesadaPorUsuarioId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "subtotal": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "compraId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "devolucionCompra"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "compra"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "createdByUsuarioId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "devolucionCompra"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "usuario"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "procesadaPorUsuarioId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "devolucionCompra"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "usuario"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "compraId"
+                  ],
+                  "name": "devolucionCompra_compraId_idx_d088a211",
+                  "prefix": "devolucionCompra_compraId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "createdByUsuarioId"
+                  ],
+                  "name": "devolucionCompra_createdByUsuarioId_idx_7796cc7d",
+                  "prefix": "devolucionCompra_createdByUsuarioId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "procesadaPorUsuarioId"
+                  ],
+                  "name": "devolucionCompra_procesadaPorUsuarioId_idx_2d9b338b",
+                  "prefix": "devolucionCompra_procesadaPorUsuarioId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "folio"
+                  ]
+                }
+              ]
+            },
+            "devolucionVenta": {
+              "checks": [
+                {
+                  "expression": "\"estado\" IN ('BORRADOR', 'PROCESADA', 'CANCELADA')",
+                  "name": "devolucionVenta_estado_check_92c58b33",
+                  "prefix": "devolucionVenta_estado_check"
+                },
+                {
+                  "expression": "estado IN ('BORRADOR', 'PROCESADA', 'CANCELADA')",
+                  "name": "devolucion_venta_estado_valido_b2cd6f04",
+                  "prefix": "devolucion_venta_estado_valido"
+                },
+                {
+                  "expression": "subtotal >= 0 AND \"costoTotal\" >= 0",
+                  "name": "devolucion_venta_importes_validos_692b7a30",
+                  "prefix": "devolucion_venta_importes_validos"
+                },
+                {
+                  "expression": "length(trim(motivo)) > 0",
+                  "name": "devolucion_venta_motivo_requerido_905a7f7a",
+                  "prefix": "devolucion_venta_motivo_requerido"
+                },
+                {
+                  "expression": "(estado = 'PROCESADA' AND \"procesadaPorUsuarioId\" IS NOT NULL AND \"fechaProcesamiento\" IS NOT NULL) OR (estado <> 'PROCESADA' AND \"procesadaPorUsuarioId\" IS NULL AND \"fechaProcesamiento\" IS NULL)",
+                  "name": "devolucion_venta_procesamiento_auditado_8a3ce104",
+                  "prefix": "devolucion_venta_procesamiento_auditado"
+                }
+              ],
+              "columns": {
+                "costoTotal": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "createdByUsuarioId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "estado": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "BORRADOR"
+                  },
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EstadoDevolucion",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "fechaProcesamiento": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "folio": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "motivo": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "observacion": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "procesadaPorUsuarioId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "subtotal": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "ventaId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "ventaId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "devolucionVenta"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "venta"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "createdByUsuarioId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "devolucionVenta"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "usuario"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "procesadaPorUsuarioId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "devolucionVenta"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "usuario"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "createdByUsuarioId"
+                  ],
+                  "name": "devolucionVenta_createdByUsuarioId_idx_7796cc7d",
+                  "prefix": "devolucionVenta_createdByUsuarioId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "procesadaPorUsuarioId"
+                  ],
+                  "name": "devolucionVenta_procesadaPorUsuarioId_idx_2d9b338b",
+                  "prefix": "devolucionVenta_procesadaPorUsuarioId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "ventaId"
+                  ],
+                  "name": "devolucionVenta_ventaId_idx_4eec5214",
+                  "prefix": "devolucionVenta_ventaId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "folio"
+                  ]
+                }
+              ]
+            },
+            "domicilioCliente": {
+              "columns": {
+                "calle": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "clienteId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "codigoPostal": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "colonia": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "estado": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "localidad": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "municipio": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "numeroExterior": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "numeroInterior": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "pais": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "referencia": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "clienteId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "domicilioCliente"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "cliente"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "clienteId"
+                  ]
+                }
+              ]
+            },
             "existencia": {
               "checks": [
                 {
@@ -2564,6 +5721,423 @@
                 {
                   "columns": [
                     "productoId"
+                  ]
+                }
+              ]
+            },
+            "importacion": {
+              "checks": [
+                {
+                  "expression": "\"totalFilas\" > 0 AND \"filasValidas\" >= 0 AND \"filasAdvertencia\" >= 0 AND \"filasError\" >= 0 AND \"totalFilas\" = \"filasValidas\" + \"filasAdvertencia\" + \"filasError\"",
+                  "name": "importacion_conteos_validos_ecbaf8e3",
+                  "prefix": "importacion_conteos_validos"
+                },
+                {
+                  "expression": "\"estado\" IN ('PREVIEW', 'PROCESANDO', 'COMPLETADA', 'FALLIDA', 'CANCELADA')",
+                  "name": "importacion_estado_check_f960c842",
+                  "prefix": "importacion_estado_check"
+                },
+                {
+                  "expression": "(estado = 'COMPLETADA' AND \"confirmedAt\" IS NOT NULL AND \"completedAt\" IS NOT NULL AND \"failedAt\" IS NULL) OR (estado = 'FALLIDA' AND \"failedAt\" IS NOT NULL AND \"completedAt\" IS NULL) OR (estado IN ('PREVIEW', 'CANCELADA') AND \"confirmedAt\" IS NULL AND \"completedAt\" IS NULL AND \"failedAt\" IS NULL) OR (estado = 'PROCESANDO' AND \"confirmedAt\" IS NOT NULL AND \"completedAt\" IS NULL AND \"failedAt\" IS NULL)",
+                  "name": "importacion_estado_coherente_b03760db",
+                  "prefix": "importacion_estado_coherente"
+                },
+                {
+                  "expression": "length(\"hashArchivo\") = 64 AND length(\"hashPlan\") = 64",
+                  "name": "importacion_hash_valido_a57cd10c",
+                  "prefix": "importacion_hash_valido"
+                },
+                {
+                  "expression": "\"tipo\" IN ('CLIENTES', 'PRODUCTOS', 'PRECIOS')",
+                  "name": "importacion_tipo_check_eeb81a7c",
+                  "prefix": "importacion_tipo_check"
+                }
+              ],
+              "columns": {
+                "completedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "configuracion": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "confirmedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "errorCodigo": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "estado": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "PREVIEW"
+                  },
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EstadoImportacion",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "failedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "filasAdvertencia": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "filasError": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "filasValidas": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "hashArchivo": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "hashPlan": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "hojas": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "nombreArchivo": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "tipo": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "TipoImportacion",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "totalFilas": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "usuarioId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "usuarioId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "importacion"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "usuario"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "createdAt",
+                    "id"
+                  ],
+                  "name": "importacion_createdAt_id_idx_3855cff1",
+                  "prefix": "importacion_createdAt_id_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "tipo",
+                    "hashArchivo"
+                  ],
+                  "name": "importacion_hash_en_uso_85358495",
+                  "prefix": "importacion_hash_en_uso",
+                  "unique": true,
+                  "where": "estado IN ('PREVIEW', 'PROCESANDO', 'COMPLETADA')"
+                },
+                {
+                  "columns": [
+                    "usuarioId"
+                  ],
+                  "name": "importacion_usuarioId_idx_5f01c7d6",
+                  "prefix": "importacion_usuarioId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "importacionFila": {
+              "checks": [
+                {
+                  "expression": "\"estado\" IN ('VALIDA', 'ADVERTENCIA', 'ERROR')",
+                  "name": "importacionFila_estado_check_56d42f9e",
+                  "prefix": "importacionFila_estado_check"
+                },
+                {
+                  "expression": "\"numeroFila\" > 0",
+                  "name": "importacion_fila_numero_valido_c64b27d4",
+                  "prefix": "importacion_fila_numero_valido"
+                }
+              ],
+              "columns": {
+                "advertencias": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "clave": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "datosNormalizados": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "errores": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "estado": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EstadoImportacionFila",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "importacionId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "numeroFila": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "plan": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "resultado": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "importacionId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "importacionFila"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "importacion"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "importacionId"
+                  ],
+                  "name": "importacionFila_importacionId_idx_8e2c6a61",
+                  "prefix": "importacionFila_importacionId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "importacionId",
+                    "estado"
+                  ],
+                  "name": "importacion_filas_estado_36f87978",
+                  "prefix": "importacion_filas_estado",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "importacionId",
+                    "numeroFila"
+                  ]
+                }
+              ]
+            },
+            "listaPrecio": {
+              "checks": [
+                {
+                  "expression": "NOT \"esPredeterminada\" OR activo",
+                  "name": "lista_predeterminada_activa_e5017ac4",
+                  "prefix": "lista_predeterminada_activa"
+                }
+              ],
+              "columns": {
+                "activo": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "codigo": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "descripcion": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "esPredeterminada": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": false
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "nombre": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [
+                {
+                  "columns": [
+                    "esPredeterminada"
+                  ],
+                  "name": "lista_unica_predeterminada_09545f21",
+                  "prefix": "lista_unica_predeterminada",
+                  "unique": true,
+                  "where": "\"esPredeterminada\" = true"
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "codigo"
                   ]
                 }
               ]
@@ -2724,6 +6298,11 @@
                   "nativeType": "int4",
                   "nullable": false
                 },
+                "claveProductoServicioSat": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "codigoBarras": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -2762,6 +6341,11 @@
                   "nativeType": "text",
                   "nullable": false
                 },
+                "objetoImpuestoSat": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "precio": {
                   "codecId": "pg/numeric@1",
                   "nativeType": "numeric",
@@ -2790,6 +6374,11 @@
                   "nativeType": "text",
                   "nullable": false
                 },
+                "unidadMedidaId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-string@1",
                   "nativeType": "timestamptz",
@@ -2797,6 +6386,23 @@
                 }
               },
               "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "unidadMedidaId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "producto"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "unidadMedida"
+                  }
+                },
                 {
                   "source": {
                     "columns": [
@@ -2822,6 +6428,14 @@
                   "name": "producto_categoriaId_idx_63b46427",
                   "prefix": "producto_categoriaId_idx",
                   "unique": false
+                },
+                {
+                  "columns": [
+                    "unidadMedidaId"
+                  ],
+                  "name": "producto_unidadMedidaId_idx_7809012f",
+                  "prefix": "producto_unidadMedidaId_idx",
+                  "unique": false
                 }
               ],
               "primaryKey": {
@@ -2841,6 +6455,149 @@
                   ]
                 }
               ]
+            },
+            "productoPrecio": {
+              "checks": [
+                {
+                  "expression": "precio >= 0 AND precio <= 1000000000000 AND precio = round(precio, 2)",
+                  "name": "producto_precio_importe_valido_7d1a36dc",
+                  "prefix": "producto_precio_importe_valido"
+                },
+                {
+                  "expression": "\"vigenciaHasta\" IS NULL OR \"vigenciaHasta\" > \"vigenciaDesde\"",
+                  "name": "producto_precio_vigencia_valida_0d6f3ad6",
+                  "prefix": "producto_precio_vigencia_valida"
+                }
+              ],
+              "columns": {
+                "activo": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "listaPrecioId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "precio": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false
+                },
+                "productoId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "vigenciaDesde": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "vigenciaHasta": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "productoId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "productoPrecio"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "producto"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "listaPrecioId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "productoPrecio"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "listaPrecio"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "listaPrecioId",
+                    "productoId",
+                    "vigenciaDesde"
+                  ],
+                  "name": "precio_lista_producto_fecha_f5736691",
+                  "prefix": "precio_lista_producto_fecha",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "listaPrecioId"
+                  ],
+                  "name": "productoPrecio_listaPrecioId_idx_d2df458c",
+                  "prefix": "productoPrecio_listaPrecioId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "productoId"
+                  ],
+                  "name": "productoPrecio_productoId_idx_cc0c10f0",
+                  "prefix": "productoPrecio_productoId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
             },
             "proveedor": {
               "columns": {
@@ -2983,6 +6740,66 @@
                 {
                   "columns": [
                     "nombre"
+                  ]
+                }
+              ]
+            },
+            "unidadMedida": {
+              "columns": {
+                "activo": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "clave": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "nombre": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "clave"
                   ]
                 }
               ]
@@ -3179,6 +6996,11 @@
                   "nativeType": "numeric",
                   "nullable": false
                 },
+                "listaPrecioId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
                 "observacion": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -3206,6 +7028,23 @@
                 }
               },
               "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "listaPrecioId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "venta"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "listaPrecio"
+                  }
+                },
                 {
                   "onDelete": "restrict",
                   "source": {
@@ -3282,6 +7121,14 @@
                   "name": "venta_createdByUsuarioId_idx_7796cc7d",
                   "prefix": "venta_createdByUsuarioId_idx",
                   "unique": false
+                },
+                {
+                  "columns": [
+                    "listaPrecioId"
+                  ],
+                  "name": "venta_listaPrecioId_idx_d2df458c",
+                  "prefix": "venta_listaPrecioId_idx",
+                  "unique": false
                 }
               ],
               "primaryKey": {
@@ -3307,12 +7154,46 @@
                 "CANCELADA"
               ]
             },
+            "EstadoDevolucion": {
+              "kind": "valueSet",
+              "values": [
+                "BORRADOR",
+                "PROCESADA",
+                "CANCELADA"
+              ]
+            },
+            "EstadoImportacion": {
+              "kind": "valueSet",
+              "values": [
+                "PREVIEW",
+                "PROCESANDO",
+                "COMPLETADA",
+                "FALLIDA",
+                "CANCELADA"
+              ]
+            },
+            "EstadoImportacionFila": {
+              "kind": "valueSet",
+              "values": [
+                "VALIDA",
+                "ADVERTENCIA",
+                "ERROR"
+              ]
+            },
             "EstadoVenta": {
               "kind": "valueSet",
               "values": [
                 "BORRADOR",
                 "CONFIRMADA",
                 "CANCELADA"
+              ]
+            },
+            "TipoImportacion": {
+              "kind": "valueSet",
+              "values": [
+                "CLIENTES",
+                "PRODUCTOS",
+                "PRECIOS"
               ]
             },
             "TipoMovimientoInventario": {
@@ -3329,10 +7210,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "2accda33f716c6319f02d17513c42f6f15d5d332d713b7719de1caf9fea6c277"
+    "storageHash": "b78d79ccbcabf28fdf4dba47579f2629edb1ed96518efc6fb2624f015a289793"
   },
   "execution": {
-    "executionHash": "5aa114fc3ec63733c7786cb603cc8930e8c775f4971488868d3d65eb6f934311",
+    "executionHash": "b2e981db6bc2f2ab2b1149ad8d8e63562f3523188db2fec6d9c4a7270a938474",
     "mutations": {
       "defaults": [
         {
@@ -3392,6 +7273,51 @@
           "ref": {
             "column": "updatedAt",
             "namespace": "public",
+            "table": "devolucionCompra"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "devolucionVenta"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "domicilioCliente"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
             "table": "existencia"
           }
         },
@@ -3407,7 +7333,37 @@
           "ref": {
             "column": "updatedAt",
             "namespace": "public",
+            "table": "listaPrecio"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
             "table": "producto"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "productoPrecio"
           }
         },
         {
@@ -3438,6 +7394,21 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "rol"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "unidadMedida"
           }
         },
         {

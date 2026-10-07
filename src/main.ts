@@ -1,17 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
-import { ValidationPipe } from '@nestjs/common';
+import { configurarHttp } from './common/http/configurar-http.js';
+import { ConfiguracionService } from './configuracion/configuracion.module.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
-  app.setGlobalPrefix('api/v1');
-
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
-  await app.listen(process.env.PORT ?? 3000);
+  configurarHttp(app);
+  await app.listen(app.get(ConfiguracionService).valores.port);
 }
 await bootstrap();

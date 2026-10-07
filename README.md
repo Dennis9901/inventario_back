@@ -1,3 +1,12 @@
+# Inventario backend
+
+Backend NestJS con Prisma ORM v8 RC y PostgreSQL. Documentación de API: [API.md](API.md). Backend 5A amplía clientes y productos con metadata COMESI y catálogo de unidades, manteniendo el núcleo transaccional.
+
+- [Modelo COMESI](docs/MODELO-COMESI.md)
+- [Clientes](docs/CLIENTES.md) y [Productos](docs/PRODUCTOS.md)
+- [Unidades de medida](docs/UNIDADES-MEDIDA.md)
+- [Validación Backend 5A](docs/VALIDACION-BACKEND-5A.md)
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
@@ -116,3 +125,15 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Backend 5B — Listas de precios
+
+Listas y vigencias extensibles con resolución centralizada y garantías PostgreSQL. Producto.precio permanece como base/fallback.
+
+Ver [docs/LISTAS-PRECIOS.md](docs/LISTAS-PRECIOS.md) para contrato, fallback, concurrencia e instalación del SQL complementario.
+
+## Backend 5C — Importador COMESI
+
+Importación CLIENTES/PRODUCTOS CSV y PRECIOS CSV/XLSX en dos fases: preview persistido sin escrituras comerciales, confirmación explícita con revalidación y transacción global. Todos los endpoints /api/v1/importaciones requieren ADMINISTRADOR. Productos crean existencia en cero; precios conservan snapshots y garantías 5B.
+
+Ver [docs/IMPORTACIONES.md](docs/IMPORTACIONES.md) para multipart, mapping, límites, idempotencia, privacidad, errores y autorización de updates/cierres. Evidencia y reporte: [docs/VALIDACION-BACKEND-5C.md](docs/VALIDACION-BACKEND-5C.md).

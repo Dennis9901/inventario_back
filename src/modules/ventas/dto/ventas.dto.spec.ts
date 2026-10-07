@@ -87,7 +87,7 @@ describe('DTOs de ventas/clientes', () => {
     { nombre: ' ' },
     { nombre: null },
     { nombre: 'P', email: 'invalido' },
-    { nombre: 'P', rfc: 'invalido' },
+    { nombre: 'P', rfc: 'X'.repeat(101) },
     { nombre: 'P', activo: false },
   ])('rechaza cliente inválido %j', async (body) => {
     await expect(validar(body, CreateClienteDto)).rejects.toThrow(

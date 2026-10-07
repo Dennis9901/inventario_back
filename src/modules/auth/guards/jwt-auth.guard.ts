@@ -6,19 +6,15 @@ import {
 } from '@nestjs/common';
 
 import { JwtService } from '@nestjs/jwt';
-import type { Request } from 'express';
+import type { ApiRequest } from '../../../common/http/request-context.js';
 import type { JwtPayload } from '../interfaces/jwt-payload.interface.js';
-
-interface AuthenticatedRequest extends Request {
-  user?: JwtPayload;
-}
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(private readonly jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const request = context.switchToHttp().getRequest<ApiRequest>();
 
     const token = this.extractToken(request);
 
@@ -27,9 +23,7 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     try {
-      const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
-        secret: process.env.JWT_SECRET,
-      });
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
 
       request.user = payload;
     } catch {
@@ -39,7 +33,7 @@ export class JwtAuthGuard implements CanActivate {
     return true;
   }
 
-  private extractToken(request: Request): string | undefined {
+  private extractToken(request: ApiRequest): string | undefined {
     const authorization = request.headers.authorization;
 
     if (!authorization) {

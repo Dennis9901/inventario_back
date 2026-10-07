@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Test } from '@nestjs/testing';
-import { ConflictException, ValidationPipe } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
 import type { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import request from 'supertest';
@@ -37,13 +37,7 @@ describe.runIf(process.env.TEST_INVENTARIO_DB === '1')(
       }).compile();
       app = module.createNestApplication();
       app.setGlobalPrefix('api/v1');
-      app.useGlobalPipes(
-        new ValidationPipe({
-          whitelist: true,
-          forbidNonWhitelisted: true,
-          transform: true,
-        }),
-      );
+
       await app.init();
       database = app.get(DatabaseService);
       productos = app.get(ProductosService);
@@ -85,6 +79,11 @@ describe.runIf(process.env.TEST_INVENTARIO_DB === '1')(
       try {
         if (database) {
           await database.db.transaction(async (tx) => {
+            for (const auditUserId of [usuarioId, receptorId])
+              if (auditUserId)
+                await tx.orm.public.Auditoria.where({
+                  usuarioId: auditUserId,
+                }).deleteAll();
             for (const id of compraIds) {
               await tx.orm.public.DetalleCompra.where({
                 compraId: id,

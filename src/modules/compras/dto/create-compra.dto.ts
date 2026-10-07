@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -15,22 +16,50 @@ import {
 import { CompraDetalleDto } from './compra-detalle.dto.js';
 
 export class CreateCompraDto {
+  @ApiProperty({
+    required: true,
+    type: 'integer',
+    format: 'int32',
+    example: 1,
+    minimum: 1,
+    maximum: 2147483647,
+  })
   @IsInt()
   @Min(1)
   @Max(2147483647)
   proveedorId!: number;
 
+  @ApiProperty({
+    required: false,
+    type: String,
+    example: 'Texto de ejemplo',
+    maxLength: 500,
+  })
   @ValidateIf((_o: unknown, v: unknown) => v !== undefined)
   @IsString()
   @MaxLength(500)
   observacion?: string;
 
+  @ApiProperty({
+    required: false,
+    type: Number,
+    example: 1,
+    minimum: 0,
+    maximum: 1_000_000_000_000,
+  })
   @ValidateIf((_o: unknown, v: unknown) => v !== undefined)
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @Max(1_000_000_000_000)
   impuestos?: number;
 
+  @ApiProperty({
+    required: true,
+    type: () => CompraDetalleDto,
+    isArray: true,
+    minItems: 1,
+    maxItems: 100,
+  })
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(100)
