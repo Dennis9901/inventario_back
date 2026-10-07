@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { DatabaseService } from '../src/database/database.service.js';
@@ -402,6 +402,7 @@ describe.runIf(process.env.TEST_INVENTARIO_DB === '1')(
         JSON.stringify(document.components.schemas['CreateProductoDto']),
       ).toContain('claveProductoServicioSat');
       expect(document.components.schemas['UnidadMedida']).toBeDefined();
+      await mkdir('docs/backend-5a', { recursive: true });
       await writeFile(
         'docs/backend-5a/openapi.json',
         JSON.stringify(document, null, 2),

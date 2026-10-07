@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -1146,6 +1146,7 @@ describe.runIf(process.env.TEST_INVENTARIO_DB === '1')(
       expect(doc.components.schemas.ImportacionFila).toHaveProperty(
         'properties.plan.properties.accion',
       );
+      await mkdir('docs/backend-5c', { recursive: true });
       await writeFile(
         'docs/backend-5c/openapi.json',
         JSON.stringify(doc, null, 2),
